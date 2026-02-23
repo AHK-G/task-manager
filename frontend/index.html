@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task Manager</title>
+</head>
+<body>
+  <h1>Task Manager</h1>
+
+  <input id="taskInput" placeholder="New task">
+  <button onclick="addTask()">Add</button>
+
+  <ul id="taskList"></ul>
+
+  <script>
+    const API = "http://localhost:5000/tasks";
+
+    async function fetchTasks() {
+      const res = await fetch(API);
+      const tasks = await res.json();
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+      tasks.forEach(task => {
+        const li = document.createElement("li");
+        li.textContent = task.title + (task.completed ? " [done]" : "");
+        li.onclick = () => toggleTask(task._id, !task.completed);
+        list.appendChild(li);
+      });
+    }
+
+    async function addTask() {
+      const title = document.getElementById("taskInput").value;
+      if (!title) return;
+      await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title })
+      });
+      document.getElementById("taskInput").value = "";
+      fetchTasks();
+    }
+
+    async function toggleTask(id, completed) {
+      await fetch(`${API}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed })
+      });
+      fetchTasks();
+    }
+
+    fetchTasks();
+  </script>
+</body>
+</html>
