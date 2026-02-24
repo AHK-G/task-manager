@@ -1,29 +1,37 @@
-# Task Manager API
+# Task Manager (Full-Stack)
 
-Live API:
-https://task-manager-api-k63u.onrender.com
+Live Demo:
+https://task-manager-nu-snowy.vercel.app/
 
-## Demo Account
+Backend:
+https://task-manager-api-k63u.onrender.com/
 
-Email: demo@test.com  
-Password: password123
+--------- Tech Stack ---------
 
-## Features
+Frontend:
+- React (Vite)
+- TypeScript
+- TailwindCSS
+- Axios
+
+Backend:
+- Node.js
+- Express
+- TypeScript
+- MongoDB Atlas
+- Mongoose
 - JWT Authentication
-- Protected routes
-- MongoDB Atlas integration
-- Fully tested with Jest
-- Deployed on Render
+- Bcrypt
 
+Testing:
+- Jest
+- Supertest
+- MongoDB Memory Server
 
-## API Usage
+CI:
+- GitHub Actions
 
-### Register
-POST /auth/register
-
-### Login
-POST /auth/login
-
-### Get Tasks (Protected)
-GET /tasks
-Authorization: Bearer <token>
+Deployment:
+- Frontend → Vercel
+- Backend → Render
+- Database → MongoDB Atlas
