@@ -1,42 +1,20 @@
-import express, { Request, Response } from "express";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import Task from "./models/Task";
+import { Request, Response } from "express";
+import Task from "../models/Task";
 
-dotenv.config();
-
-export const app = express();
-
-app.use(express.json());
-
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI as string);
-    console.log("MongoDB Connected ✅");
-  } catch (error) {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  }
-};
-
-if (process.env.NODE_ENV !== "test") {
-  connectDB();
-}
-
-app.get("/tasks", async (_req: Request, res: Response) => {
+export const getTasks = async (_req: Request, res: Response) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-});
+};
 
-app.post("/tasks", async (req: Request, res: Response) => {
+export const createTask = async (req: Request, res: Response) => {
   try {
     const { title } = req.body;
 
-    if (!title) {
+    if (!title || title.trim() === "") {
       return res.status(400).json({ error: "Title is required" });
     }
 
@@ -47,9 +25,9 @@ app.post("/tasks", async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
-});
+};
 
-app.put("/tasks/:id", async (req: Request, res: Response) => {
+export const updateTask = async (req: Request, res: Response) => {
   try {
     const { completed } = req.body;
 
@@ -67,9 +45,9 @@ app.put("/tasks/:id", async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
-});
+};
 
-app.delete("/tasks/:id", async (req: Request, res: Response) => {
+export const deleteTask = async (req: Request, res: Response) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
 
@@ -81,12 +59,4 @@ app.delete("/tasks/:id", async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
-});
-
-if (process.env.NODE_ENV !== "test") {
-  const PORT = process.env.PORT || 5000;
-
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} 🚀`);
-  });
-}
+};
