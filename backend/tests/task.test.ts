@@ -32,4 +32,53 @@ it("should fail when title contains only whitespace", async () => {
 
   expect(res.status).toBe(400);
 });
+it("should create a task successfully", async () => {
+  const res = await request(app)
+    .post("/tasks")
+    .send({ title: "My Task" });
+
+  expect(res.status).toBe(201);
+  expect(res.body.title).toBe("My Task");
+  expect(res.body.completed).toBe(false);
+});
+
+it("should return all tasks", async () => {
+  await request(app)
+    .post("/tasks")
+    .send({ title: "Task 1" });
+
+  const res = await request(app).get("/tasks");
+
+  expect(res.status).toBe(200);
+  expect(Array.isArray(res.body)).toBe(true);
+});
+
+it("should update a task", async () => {
+  const create = await request(app)
+    .post("/tasks")
+    .send({ title: "Update Me" });
+
+  const res = await request(app)
+    .put(`/tasks/${create.body._id}`)
+    .send({ completed: true });
+
+  expect(res.status).toBe(200);
+  expect(res.body.completed).toBe(true);
+});
+it("should return 404 for non-existent task update", async () => {
+  const fakeId = new mongoose.Types.ObjectId();
+
+  const res = await request(app)
+    .put(`/tasks/${fakeId}`)
+    .send({ completed: true });
+
+  expect(res.status).toBe(404);
+});
+it("should return 404 for non-existent task delete", async () => {
+  const fakeId = new mongoose.Types.ObjectId();
+
+  const res = await request(app).delete(`/tasks/${fakeId}`);
+
+  expect(res.status).toBe(404);
+});
 });
