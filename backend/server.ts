@@ -9,9 +9,6 @@ export const app = express();
 
 app.use(express.json());
 
-/**
- * MongoDB Connection
- */
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI as string);
@@ -22,16 +19,10 @@ const connectDB = async () => {
   }
 };
 
-// Only connect if not running tests
 if (process.env.NODE_ENV !== "test") {
   connectDB();
 }
 
-/**
- * Routes
- */
-
-// GET all tasks
 app.get("/tasks", async (_req: Request, res: Response) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
@@ -41,7 +32,6 @@ app.get("/tasks", async (_req: Request, res: Response) => {
   }
 });
 
-// CREATE task
 app.post("/tasks", async (req: Request, res: Response) => {
   try {
     const { title } = req.body;
@@ -59,7 +49,6 @@ app.post("/tasks", async (req: Request, res: Response) => {
   }
 });
 
-// UPDATE task
 app.put("/tasks/:id", async (req: Request, res: Response) => {
   try {
     const { completed } = req.body;
@@ -80,7 +69,6 @@ app.put("/tasks/:id", async (req: Request, res: Response) => {
   }
 });
 
-// DELETE task
 app.delete("/tasks/:id", async (req: Request, res: Response) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
@@ -95,9 +83,6 @@ app.delete("/tasks/:id", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Start Server (not during tests)
- */
 if (process.env.NODE_ENV !== "test") {
   const PORT = process.env.PORT || 5000;
 

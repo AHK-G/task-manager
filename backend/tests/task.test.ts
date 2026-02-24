@@ -25,4 +25,11 @@ describe("Task API", () => {
   expect(res.status).toBe(400);
   expect(res.body.error).toBeDefined();
 });
+it("should fail when title contains only whitespace", async () => {
+  const res = await request(app)
+    .post("/tasks")
+    .send({ title: "   " });
+
+  expect(res.status).toBe(400);
+});
 });
