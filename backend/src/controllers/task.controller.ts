@@ -1,62 +1,78 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Task from "../models/Task";
+import { AppError } from "../utils/AppError";
 
-export const getTasks = async (_req: Request, res: Response) => {
+export const getTasks = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
     res.json(tasks);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { title } = req.body;
 
     if (!title || title.trim() === "") {
-      return res.status(400).json({ error: "Title is required" });
+      throw new AppError("Title is required", 400);
     }
 
-    const task = new Task({ title });
-    await task.save();
+    const task = await Task.create({ title });
 
     res.status(201).json(task);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { completed } = req.body;
 
     const task = await Task.findByIdAndUpdate(
       req.params.id,
       { completed },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     if (!task) {
-      return res.status(404).json({ error: "Task not found" });
+      throw new AppError("Task not found", 404);
     }
 
     res.json(task);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const deleteTask = async (req: Request, res: Response) => {
+export const deleteTask = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
 
     if (!task) {
-      return res.status(404).json({ error: "Task not found" });
+      throw new AppError("Task not found", 404);
     }
 
     res.json({ message: "Task deleted" });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
+  } catch (error) {
+    next(error);
   }
 };
