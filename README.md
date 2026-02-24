@@ -9,3 +9,16 @@ https://task-manager-api-k63u.onrender.com
 - MongoDB Atlas integration
 - Fully tested with Jest
 - Deployed on Render
+
+
+## API Usage
+
+### Register
+POST /auth/register
+
+### Login
+POST /auth/login
+
+### Get Tasks (Protected)
+GET /tasks
+Authorization: Bearer <token>
