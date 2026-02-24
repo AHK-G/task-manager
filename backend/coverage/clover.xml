@@ -1,22 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1771943920920" clover="3.2.0">
-  <project timestamp="1771943920920" name="All files">
-    <metrics statements="56" coveredstatements="54" conditionals="9" coveredconditionals="7" methods="6" coveredmethods="6" elements="71" coveredelements="67" complexity="0" loc="56" ncloc="56" packages="6" files="6" classes="6"/>
+<coverage generated="1771952167294" clover="3.2.0">
+  <project timestamp="1771952167294" name="All files">
+    <metrics statements="112" coveredstatements="102" conditionals="21" coveredconditionals="14" methods="10" coveredmethods="9" elements="143" coveredelements="125" complexity="0" loc="112" ncloc="112" packages="6" files="10" classes="10"/>
     <package name="src">
-      <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <metrics statements="12" coveredstatements="11" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
       <file name="app.ts" path="/home/arash/task-manager/backend/src/app.ts">
-        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <metrics statements="12" coveredstatements="11" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>
         <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
         <line num="5" count="1" type="stmt"/>
         <line num="7" count="1" type="stmt"/>
         <line num="9" count="1" type="stmt"/>
-        <line num="11" count="1" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
       </file>
     </package>
     <package name="src.controllers">
-      <metrics statements="30" coveredstatements="28" conditionals="5" coveredconditionals="5" methods="4" coveredmethods="4"/>
+      <metrics statements="60" coveredstatements="51" conditionals="14" coveredconditionals="9" methods="6" coveredmethods="6"/>
+      <file name="auth.controller.ts" path="/home/arash/task-manager/backend/src/controllers/auth.controller.ts">
+        <metrics statements="30" coveredstatements="23" conditionals="9" coveredconditionals="4" methods="2" coveredmethods="2"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="15" count="1" type="cond" truecount="2" falsecount="1"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="20" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="33" count="0" type="stmt"/>
+        <line num="37" count="1" type="stmt"/>
+        <line num="42" count="1" type="stmt"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="45" count="1" type="cond" truecount="2" falsecount="1"/>
+        <line num="46" count="0" type="stmt"/>
+        <line num="49" count="1" type="stmt"/>
+        <line num="50" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="51" count="0" type="stmt"/>
+        <line num="54" count="1" type="stmt"/>
+        <line num="55" count="1" type="cond" truecount="0" falsecount="1"/>
+        <line num="56" count="0" type="stmt"/>
+        <line num="59" count="1" type="stmt"/>
+        <line num="65" count="1" type="stmt"/>
+        <line num="67" count="0" type="stmt"/>
+      </file>
       <file name="task.controller.ts" path="/home/arash/task-manager/backend/src/controllers/task.controller.ts">
         <metrics statements="30" coveredstatements="28" conditionals="5" coveredconditionals="5" methods="4" coveredmethods="4"/>
         <line num="2" count="1" type="stmt"/>
@@ -52,16 +90,31 @@
       </file>
     </package>
     <package name="src.middleware">
-      <metrics statements="3" coveredstatements="3" conditionals="4" coveredconditionals="2" methods="1" coveredmethods="1"/>
+      <metrics statements="15" coveredstatements="15" conditionals="7" coveredconditionals="5" methods="2" coveredmethods="2"/>
+      <file name="auth.middleware.ts" path="/home/arash/task-manager/backend/src/middleware/auth.middleware.ts">
+        <metrics statements="12" coveredstatements="12" conditionals="3" coveredconditionals="3" methods="1" coveredmethods="1"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="10" count="10" type="stmt"/>
+        <line num="11" count="10" type="stmt"/>
+        <line num="13" count="10" type="cond" truecount="3" falsecount="0"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="17" count="9" type="stmt"/>
+        <line num="19" count="9" type="stmt"/>
+        <line num="24" count="9" type="stmt"/>
+        <line num="26" count="9" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+      </file>
       <file name="error.middleware.ts" path="/home/arash/task-manager/backend/src/middleware/error.middleware.ts">
         <metrics statements="3" coveredstatements="3" conditionals="4" coveredconditionals="2" methods="1" coveredmethods="1"/>
         <line num="3" count="1" type="stmt"/>
-        <line num="9" count="4" type="cond" truecount="1" falsecount="1"/>
-        <line num="11" count="4" type="stmt"/>
+        <line num="9" count="5" type="cond" truecount="1" falsecount="1"/>
+        <line num="11" count="5" type="stmt"/>
       </file>
     </package>
     <package name="src.models">
-      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       <file name="Task.ts" path="/home/arash/task-manager/backend/src/models/Task.ts">
         <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="1" count="1" type="stmt"/>
@@ -69,9 +122,24 @@
         <line num="24" count="1" type="stmt"/>
         <line num="26" count="1" type="stmt"/>
       </file>
+      <file name="User.ts" path="/home/arash/task-manager/backend/src/models/User.ts">
+        <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+      </file>
     </package>
     <package name="src.routes">
-      <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <metrics statements="14" coveredstatements="14" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <file name="auth.routes.ts" path="/home/arash/task-manager/backend/src/routes/auth.routes.ts">
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="10" count="1" type="stmt"/>
+      </file>
       <file name="task.routes.ts" path="/home/arash/task-manager/backend/src/routes/task.routes.ts">
         <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="1" count="1" type="stmt"/>
@@ -89,9 +157,9 @@
       <file name="AppError.ts" path="/home/arash/task-manager/backend/src/utils/AppError.ts">
         <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
         <line num="1" count="1" type="stmt"/>
-        <line num="5" count="4" type="stmt"/>
-        <line num="6" count="4" type="stmt"/>
-        <line num="8" count="4" type="stmt"/>
+        <line num="5" count="6" type="stmt"/>
+        <line num="6" count="6" type="stmt"/>
+        <line num="8" count="6" type="stmt"/>
       </file>
     </package>
   </project>
