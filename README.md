@@ -3,6 +3,11 @@
 Live API:
 https://task-manager-api-k63u.onrender.com
 
+## Demo Account
+
+Email: demo@test.com  
+Password: password123
+
 ## Features
 - JWT Authentication
 - Protected routes
