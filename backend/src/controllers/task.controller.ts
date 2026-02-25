@@ -4,6 +4,8 @@ import { AppError } from "../utils/AppError";
 
 type AuthRequest = Request & { userId?: string };
 
+
+// ================= GET TASKS =================
 export const getTasks = async (
   req: AuthRequest,
   res: Response,
@@ -11,7 +13,7 @@ export const getTasks = async (
 ) => {
   try {
     const tasks = await Task.find({ user: req.userId }).sort({
-      createdAt: -1,
+      order: 1, // 🔥 Sort by manual order
     });
 
     res.json(tasks);
@@ -20,6 +22,8 @@ export const getTasks = async (
   }
 };
 
+
+// ================= CREATE TASK =================
 export const createTask = async (
   req: AuthRequest,
   res: Response,
@@ -32,9 +36,16 @@ export const createTask = async (
       throw new AppError("Title is required", 400);
     }
 
+    // 🔥 Find last task for this user
+    const lastTask = await Task.findOne({ user: req.userId })
+      .sort({ order: -1 });
+
+    const nextOrder = lastTask ? lastTask.order + 1 : 0;
+
     const task = await Task.create({
       title,
       user: req.userId,
+      order: nextOrder,
     });
 
     res.status(201).json(task);
@@ -43,6 +54,8 @@ export const createTask = async (
   }
 };
 
+
+// ================= UPDATE TASK =================
 export const updateTask = async (
   req: AuthRequest,
   res: Response,
@@ -71,6 +84,8 @@ export const updateTask = async (
   }
 };
 
+
+// ================= DELETE TASK =================
 export const deleteTask = async (
   req: AuthRequest,
   res: Response,
@@ -87,6 +102,35 @@ export const deleteTask = async (
     }
 
     res.json({ message: "Task deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ================= REORDER TASKS =================
+export const reorderTasks = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { tasks } = req.body;
+    // Expected format:
+    // tasks: [{ id: string, order: number }]
+
+    if (!Array.isArray(tasks)) {
+      throw new AppError("Invalid reorder payload", 400);
+    }
+
+    for (const item of tasks) {
+      await Task.findOneAndUpdate(
+        { _id: item.id, user: req.userId },
+        { order: item.order }
+      );
+    }
+
+    res.json({ message: "Order updated" });
   } catch (error) {
     next(error);
   }
