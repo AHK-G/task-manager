@@ -309,30 +309,90 @@ function TaskItem({
   deleteTask,
   completedStyle = false,
 }: any) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(task.title);
+  const [saving, setSaving] = useState(false);
+
+  const saveEdit = async () => {
+    if (!editValue.trim()) {
+      setEditValue(task.title);
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await api.put(`/tasks/${task._id}`, {
+        title: editValue,
+      });
+    } catch {
+      setEditValue(task.title);
+    } finally {
+      setSaving(false);
+      setIsEditing(false);
+    }
+  };
+
   return (
-    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
-      <div className="flex items-center gap-3">
+    <div className="group bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+
+      {/* LEFT SIDE */}
+      <div className="flex items-center gap-3 flex-1">
+
         <input
           type="checkbox"
           checked={task.completed}
           onChange={() => toggleTask(task)}
           className="w-5 h-5 accent-indigo-500 cursor-pointer"
         />
-        <span
-          className={`text-lg ${
-            completedStyle ? "line-through text-slate-400" : ""
-          }`}
-        >
-          {task.title}
-        </span>
+
+        {isEditing ? (
+          <input
+            autoFocus
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={saveEdit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveEdit();
+              if (e.key === "Escape") {
+                setEditValue(task.title);
+                setIsEditing(false);
+              }
+            }}
+            className="flex-1 bg-white/20 border border-white/30 p-2 rounded-lg text-white outline-none"
+          />
+        ) : (
+          <span
+            onDoubleClick={() => setIsEditing(true)}
+            className={`flex-1 text-lg ${
+              completedStyle ? "line-through text-slate-400" : ""
+            }`}
+          >
+            {task.title}
+          </span>
+        )}
       </div>
 
-      <button
-        onClick={() => deleteTask(task._id)}
-        className="text-red-400 hover:text-red-500 transition"
-      >
-        Delete
-      </button>
+      {/* RIGHT SIDE ACTIONS */}
+      <div className="flex items-center gap-4 ml-4">
+
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="opacity-0 group-hover:opacity-100 transition text-indigo-400 hover:text-indigo-300"
+            title="Edit task"
+          >
+            ✏️
+          </button>
+        )}
+
+        <button
+          onClick={() => deleteTask(task._id)}
+          className="text-red-400 hover:text-red-500 transition"
+        >
+          Delete
+        </button>
+      </div>
     </div>
   );
 }

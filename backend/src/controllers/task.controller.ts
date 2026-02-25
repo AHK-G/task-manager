@@ -49,11 +49,15 @@ export const updateTask = async (
   next: NextFunction
 ) => {
   try {
-    const { completed } = req.body;
+    const { completed, title } = req.body;
+
+    const updateData: any = {};
+    if (completed !== undefined) updateData.completed = completed;
+    if (title !== undefined) updateData.title = title;
 
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
-      { completed },
+      updateData,
       { returnDocument: "after" }
     );
 
