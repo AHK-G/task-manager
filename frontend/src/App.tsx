@@ -7,6 +7,12 @@ type Task = {
   completed: boolean;
 };
 
+const Spinner = () => (
+  <div className="flex justify-center items-center">
+    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,13 +32,31 @@ function App() {
     setTimeout(() => setSuccess(null), 3000);
   };
 
+  const validateAuth = () => {
+    setError(null);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return false;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return false;
+    }
+
+    return true;
+  };
 
   const register = async () => {
+    if (!validateAuth()) return;
+
     try {
       setLoading(true);
-      setError(null);
       await api.post("/auth/register", { email, password });
-      showSuccess("Account created successfully");
+      showSuccess("Account created successfully 🎉");
       setIsRegisterMode(false);
     } catch (err: any) {
       setError(err.response?.data?.error || "Registration failed");
@@ -42,9 +66,10 @@ function App() {
   };
 
   const login = async () => {
+    if (!validateAuth()) return;
+
     try {
       setLoading(true);
-      setError(null);
       const res = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", res.data.token);
       setIsLoggedIn(true);
@@ -62,7 +87,6 @@ function App() {
     setTasks([]);
     showSuccess("Logged out");
   };
-
 
   const fetchTasks = async () => {
     const res = await api.get("/tasks");
@@ -106,13 +130,6 @@ function App() {
     }
   }, [isLoggedIn]);
 
-  const Spinner = () => (
-  <div className="flex justify-center items-center">
-    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
-
-
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black">
@@ -150,7 +167,7 @@ function App() {
 
           <button
             disabled={loading}
-            className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50"
+            className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50 flex justify-center"
             onClick={isRegisterMode ? register : login}
           >
             {loading ? <Spinner /> : isRegisterMode ? "Register" : "Login"}
@@ -175,7 +192,6 @@ function App() {
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white">
@@ -211,7 +227,7 @@ function App() {
           />
           <button
             disabled={loading}
-            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex justify-center"
             onClick={addTask}
           >
             {loading ? <Spinner /> : "Add"}
