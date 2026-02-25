@@ -7,7 +7,7 @@ type Task = {
   completed: boolean;
 };
 
-export default function App() {
+function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -15,16 +15,26 @@ export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("token")
   );
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   const register = async () => {
-    await api.post("/auth/register", { email, password });
-    alert("Registered! Now login.");
+    try {
+      await api.post("/auth/register", { email, password });
+      alert("Registered! You can now login.");
+      setIsRegisterMode(false);
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Registration failed");
+    }
   };
 
   const login = async () => {
-    const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", res.data.token);
-    setIsLoggedIn(true);
+    try {
+      const res = await api.post("/auth/login", { email, password });
+      localStorage.setItem("token", res.data.token);
+      setIsLoggedIn(true);
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Login failed");
+    }
   };
 
   const logout = () => {
@@ -53,97 +63,117 @@ export default function App() {
   };
 
   const deleteTask = async (id: string) => {
+    if (!confirm("Delete this task?")) return;
     await api.delete(`/tasks/${id}`);
     fetchTasks();
   };
 
   useEffect(() => {
-    if (isLoggedIn) fetchTasks();
+    if (isLoggedIn) {
+      fetchTasks();
+    }
   }, [isLoggedIn]);
+
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white w-full max-w-sm p-8 rounded-xl shadow-md">
-          <h2 className="text-2xl font-bold text-center mb-6">
-            Login / Register
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black">
+        <div className="bg-white/10 backdrop-blur-xl p-10 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
+          <h2 className="text-3xl font-bold mb-2 text-center text-white">
+            Task Manager
           </h2>
 
+          <p className="text-center text-slate-300 mb-8">
+            {isRegisterMode
+              ? "Create your account"
+              : "Welcome back"}
+          </p>
+
           <input
-            className="w-full border p-2 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
+            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
             type="password"
-            className="w-full border p-2 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <div className="flex gap-2">
-            <button
-              onClick={login}
-              className="flex-1 bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
-            >
-              Login
-            </button>
+          <button
+            className="w-full bg-indigo-500 text-white py-3 rounded-lg font-medium hover:bg-indigo-600 transition"
+            onClick={isRegisterMode ? register : login}
+          >
+            {isRegisterMode ? "Register" : "Login"}
+          </button>
 
+          <p className="text-center text-sm text-slate-300 mt-6">
+            {isRegisterMode
+              ? "Already have an account?"
+              : "Don't have an account?"}
             <button
-              onClick={register}
-              className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600 transition"
+              onClick={() => setIsRegisterMode(!isRegisterMode)}
+              className="ml-2 text-indigo-400 hover:underline"
             >
-              Register
+              {isRegisterMode ? "Login" : "Register"}
             </button>
-          </div>
+          </p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen flex justify-center p-6">
-      <div className="bg-white w-full max-w-xl p-8 rounded-xl shadow-md">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Task Manager</h2>
-          <button
-            onClick={logout}
-            className="text-sm text-red-500 hover:underline"
-          >
-            Logout
-          </button>
-        </div>
 
-        <div className="flex gap-2 mb-6">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white">
+      <header className="bg-white/10 backdrop-blur-md border-b border-white/20 px-8 py-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Your Tasks</h1>
+        <button
+          onClick={logout}
+          className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition"
+        >
+          Logout
+        </button>
+      </header>
+
+      <main className="max-w-2xl mx-auto p-8">
+        <div className="flex gap-3 mb-8">
           <input
-            className="flex-1 border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="New Task"
+            className="flex-1 bg-white/20 border border-white/30 p-3 rounded-lg placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-green-400"
+            placeholder="Add a new task..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
           <button
+            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition"
             onClick={addTask}
-            className="bg-blue-500 text-white px-4 rounded hover:bg-blue-600 transition"
           >
             Add
           </button>
         </div>
 
-        <ul className="space-y-3">
+        {tasks.length === 0 && (
+          <div className="text-center text-slate-300 mt-16 text-lg">
+            No tasks yet. Start building your productivity 🚀
+          </div>
+        )}
+
+        <div className="space-y-4">
           {tasks.map((task) => (
-            <li
+            <div
               key={task._id}
-              className="flex justify-between items-center bg-gray-50 p-3 rounded"
+              className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition"
             >
               <span
                 onClick={() => toggleTask(task)}
-                className={`cursor-pointer ${
+                className={`cursor-pointer text-lg ${
                   task.completed
-                    ? "line-through text-gray-400"
-                    : ""
+                    ? "line-through text-slate-400"
+                    : "text-white"
                 }`}
               >
                 {task.title}
@@ -151,14 +181,16 @@ export default function App() {
 
               <button
                 onClick={() => deleteTask(task._id)}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-400 hover:text-red-500 transition"
               >
-                ✕
+                Delete
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
+
+export default App;
