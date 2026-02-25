@@ -17,23 +17,42 @@ function App() {
   );
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const showSuccess = (message: string) => {
+    setSuccess(message);
+    setTimeout(() => setSuccess(null), 3000);
+  };
+
+
   const register = async () => {
     try {
+      setLoading(true);
+      setError(null);
       await api.post("/auth/register", { email, password });
-      alert("Registered! You can now login.");
+      showSuccess("Account created successfully");
       setIsRegisterMode(false);
     } catch (err: any) {
-      alert(err.response?.data?.error || "Registration failed");
+      setError(err.response?.data?.error || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   const login = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", res.data.token);
       setIsLoggedIn(true);
+      showSuccess("Logged in successfully");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Login failed");
+      setError(err.response?.data?.error || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,7 +60,9 @@ function App() {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
     setTasks([]);
+    showSuccess("Logged out");
   };
+
 
   const fetchTasks = async () => {
     const res = await api.get("/tasks");
@@ -50,9 +71,19 @@ function App() {
 
   const addTask = async () => {
     if (!title.trim()) return;
-    await api.post("/tasks", { title });
-    setTitle("");
-    fetchTasks();
+
+    try {
+      setLoading(true);
+      setError(null);
+      await api.post("/tasks", { title });
+      setTitle("");
+      fetchTasks();
+      showSuccess("Task added");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to add task");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleTask = async (task: Task) => {
@@ -66,6 +97,7 @@ function App() {
     if (!confirm("Delete this task?")) return;
     await api.delete(`/tasks/${id}`);
     fetchTasks();
+    showSuccess("Task deleted");
   };
 
   useEffect(() => {
@@ -79,25 +111,31 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black">
         <div className="bg-white/10 backdrop-blur-xl p-10 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
-          <h2 className="text-3xl font-bold mb-2 text-center text-white">
+          <h2 className="text-3xl font-bold mb-6 text-center text-white">
             Task Manager
           </h2>
 
-          <p className="text-center text-slate-300 mb-8">
-            {isRegisterMode
-              ? "Create your account"
-              : "Welcome back"}
-          </p>
+          {error && (
+            <div className="bg-red-500/20 text-red-300 p-3 mb-4 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-500/20 text-green-300 p-3 mb-4 rounded-lg text-sm">
+              {success}
+            </div>
+          )}
 
           <input
-            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-4 rounded-lg"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
-            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-6 rounded-lg"
             type="password"
             placeholder="Password"
             value={password}
@@ -105,10 +143,15 @@ function App() {
           />
 
           <button
-            className="w-full bg-indigo-500 text-white py-3 rounded-lg font-medium hover:bg-indigo-600 transition"
+            disabled={loading}
+            className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50"
             onClick={isRegisterMode ? register : login}
           >
-            {isRegisterMode ? "Register" : "Login"}
+            {loading
+              ? "Please wait..."
+              : isRegisterMode
+              ? "Register"
+              : "Login"}
           </button>
 
           <p className="text-center text-sm text-slate-300 mt-6">
@@ -116,7 +159,11 @@ function App() {
               ? "Already have an account?"
               : "Don't have an account?"}
             <button
-              onClick={() => setIsRegisterMode(!isRegisterMode)}
+              onClick={() => {
+                setError(null);
+                setSuccess(null);
+                setIsRegisterMode(!isRegisterMode);
+              }}
               className="ml-2 text-indigo-400 hover:underline"
             >
               {isRegisterMode ? "Login" : "Register"}
@@ -141,24 +188,37 @@ function App() {
       </header>
 
       <main className="max-w-2xl mx-auto p-8">
+        {error && (
+          <div className="bg-red-500/20 text-red-300 p-3 mb-6 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="bg-green-500/20 text-green-300 p-3 mb-6 rounded-lg text-sm">
+            {success}
+          </div>
+        )}
+
         <div className="flex gap-3 mb-8">
           <input
-            className="flex-1 bg-white/20 border border-white/30 p-3 rounded-lg placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-green-400"
+            className="flex-1 bg-white/20 border border-white/30 p-3 rounded-lg placeholder-slate-300"
             placeholder="Add a new task..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
           <button
-            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition"
+            disabled={loading}
+            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
             onClick={addTask}
           >
-            Add
+            {loading ? "Adding..." : "Add"}
           </button>
         </div>
 
         {tasks.length === 0 && (
           <div className="text-center text-slate-300 mt-16 text-lg">
-            No tasks yet. Start building your productivity 🚀
+            No tasks yet.
           </div>
         )}
 
