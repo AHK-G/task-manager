@@ -3,28 +3,27 @@ import jwt from "jsonwebtoken";
 import { AppError } from "../utils/AppError";
 
 export const authMiddleware = (
-  req: Request,
+  req: Request & { userId?: string },
   _res: Response,
   next: NextFunction
 ) => {
+  const header = req.headers.authorization;
+
+  if (!header || !header.startsWith("Bearer ")) {
+    return next(new AppError("Unauthorized", 401));
+  }
+
+  const token = header.split(" ")[1];
+
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new AppError("Unauthorized", 401);
-    }
-
-    const token = authHeader.split(" ")[1];
-
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET as string
     ) as { userId: string };
 
-    (req as any).user = decoded;
-
+    req.userId = decoded.userId;
     next();
-  } catch (error) {
+  } catch {
     next(new AppError("Unauthorized", 401));
   }
 };

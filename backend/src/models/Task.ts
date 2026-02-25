@@ -1,13 +1,6 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose from "mongoose";
 
-export interface ITask extends Document {
-  title: string;
-  completed: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const taskSchema = new Schema<ITask>(
+const taskSchema = new mongoose.Schema(
   {
     title: {
       type: String,
@@ -17,10 +10,13 @@ const taskSchema = new Schema<ITask>(
       type: Boolean,
       default: false,
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
-const Task = mongoose.model<ITask>("Task", taskSchema);
-
-export default Task;
+export default mongoose.model("Task", taskSchema);
