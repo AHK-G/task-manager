@@ -1,81 +1,66 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 
+import {
+  DndContext,
+  closestCenter,
+} from "@dnd-kit/core";
+
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
 type Task = {
   _id: string;
   title: string;
   completed: boolean;
 };
 
-const Spinner = () => (
-  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-);
-
 function App() {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [title, setTitle] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(
     !!localStorage.getItem("token")
   );
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [title, setTitle] = useState("");
+  const [filter, setFilter] = useState<
+    "all" | "active" | "completed"
+  >("all");
+
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
 
-  const showSuccess = (message: string) => {
-    setSuccess(message);
-    setTimeout(() => setSuccess(null), 3000);
-  };
-
-  const validateAuth = () => {
-    setError(null);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
-      return false;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return false;
-    }
-
-    return true;
-  };
 
   const register = async () => {
-    if (!validateAuth()) return;
-
     try {
-      setLoading(true);
       await api.post("/auth/register", { email, password });
-      showSuccess("Account created successfully");
       setIsRegisterMode(false);
+      setError(null);
     } catch (err: any) {
       setError(err.response?.data?.error || "Registration failed");
-    } finally {
-      setLoading(false);
     }
   };
 
   const login = async () => {
-    if (!validateAuth()) return;
-
     try {
-      setLoading(true);
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", {
+        email,
+        password,
+      });
       localStorage.setItem("token", res.data.token);
       setIsLoggedIn(true);
-      showSuccess("Logged in successfully");
+      setError(null);
     } catch (err: any) {
       setError(err.response?.data?.error || "Login failed");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -83,8 +68,8 @@ function App() {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
     setTasks([]);
-    showSuccess("Logged out");
   };
+
 
   const fetchTasks = async () => {
     const res = await api.get("/tasks");
@@ -94,40 +79,54 @@ function App() {
   const addTask = async () => {
     if (!title.trim()) return;
 
-    try {
-      setLoading(true);
-      await api.post("/tasks", { title });
-      setTitle("");
-      fetchTasks();
-      showSuccess("Task added");
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to add task");
-    } finally {
-      setLoading(false);
-    }
+    const res = await api.post("/tasks", { title });
+    setTasks((prev) => [...prev, res.data]);
+    setTitle("");
   };
 
   const toggleTask = async (task: Task) => {
-    await api.put(`/tasks/${task._id}`, {
+    const res = await api.put(`/tasks/${task._id}`, {
       completed: !task.completed,
     });
-    fetchTasks();
+
+    setTasks((prev) =>
+      prev.map((t) => (t._id === task._id ? res.data : t))
+    );
   };
 
   const deleteTask = async (id: string) => {
-    if (!confirm("Delete this task?")) return;
     await api.delete(`/tasks/${id}`);
-    fetchTasks();
-    showSuccess("Task deleted");
+    setTasks((prev) => prev.filter((t) => t._id !== id));
+  };
+
+
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = tasks.findIndex(
+      (t) => t._id === active.id
+    );
+    const newIndex = tasks.findIndex(
+      (t) => t._id === over.id
+    );
+
+    const newTasks = arrayMove(tasks, oldIndex, newIndex);
+    setTasks(newTasks);
+
+    await api.put("/tasks/reorder", {
+      tasks: newTasks.map((task, index) => ({
+        id: task._id,
+        order: index,
+      })),
+    });
   };
 
   useEffect(() => {
     if (isLoggedIn) fetchTasks();
   }, [isLoggedIn]);
 
-  const total = tasks.length;
-  const completed = tasks.filter((t) => t.completed).length;
-  const active = total - completed;
 
   const filteredTasks = tasks.filter((task) => {
     if (filter === "active") return !task.completed;
@@ -135,35 +134,34 @@ function App() {
     return true;
   });
 
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.completed).length;
+  const active = total - completed;
+
+
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black">
-        <div className="bg-white/10 backdrop-blur-xl p-10 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
-          <h2 className="text-3xl font-bold mb-6 text-center text-white">
-            Task Manager
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white">
+        <div className="bg-white/10 backdrop-blur-xl p-8 rounded-xl w-full max-w-md">
+          <h2 className="text-2xl mb-6 text-center">
+            {isRegisterMode ? "Register" : "Login"}
           </h2>
 
           {error && (
-            <div className="bg-red-500/20 text-red-300 p-3 mb-4 rounded-lg text-sm">
+            <div className="bg-red-500/20 p-3 rounded mb-4 text-sm">
               {error}
             </div>
           )}
 
-          {success && (
-            <div className="bg-green-500/20 text-green-300 p-3 mb-4 rounded-lg text-sm">
-              {success}
-            </div>
-          )}
-
           <input
-            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-4 rounded-lg"
+            className="w-full p-3 mb-3 bg-white/20 rounded"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <input
-            className="w-full bg-white/20 text-white placeholder-slate-300 border border-white/30 p-3 mb-6 rounded-lg"
+            className="w-full p-3 mb-6 bg-white/20 rounded"
             type="password"
             placeholder="Password"
             value={password}
@@ -171,24 +169,19 @@ function App() {
           />
 
           <button
-            disabled={loading}
-            className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50 flex items-center justify-center"
+            className="w-full bg-indigo-500 py-3 rounded mb-4"
             onClick={isRegisterMode ? register : login}
           >
-            {loading ? <Spinner /> : isRegisterMode ? "Register" : "Login"}
+            {isRegisterMode ? "Register" : "Login"}
           </button>
 
-          <p className="text-center text-sm text-slate-300 mt-6">
+          <p className="text-center text-sm">
             {isRegisterMode
               ? "Already have an account?"
               : "Don't have an account?"}
             <button
-              onClick={() => {
-                setError(null);
-                setSuccess(null);
-                setIsRegisterMode(!isRegisterMode);
-              }}
-              className="ml-2 text-indigo-400 hover:underline"
+              onClick={() => setIsRegisterMode(!isRegisterMode)}
+              className="ml-2 underline"
             >
               {isRegisterMode ? "Login" : "Register"}
             </button>
@@ -200,23 +193,21 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white">
-      <header className="bg-white/10 backdrop-blur-md border-b border-white/20 px-8 py-4 flex justify-between items-center">
+      <header className="flex justify-between items-center p-6">
         <h1 className="text-2xl font-bold">Your Tasks</h1>
         <button
           onClick={logout}
-          className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition"
+          className="bg-red-500 px-4 py-2 rounded"
         >
           Logout
         </button>
       </header>
 
-      <main className="max-w-2xl mx-auto p-8">
+      <main className="max-w-2xl mx-auto p-6">
 
-        <div className="flex justify-between items-center mb-6 text-sm text-slate-300">
+        <div className="flex justify-between mb-4 text-sm text-slate-300">
           <div>
-            <span className="mr-4">Total: {total}</span>
-            <span className="mr-4">Active: {active}</span>
-            <span>Completed: {completed}</span>
+            Total: {total} | Active: {active} | Completed: {completed}
           </div>
 
           <div className="flex gap-2">
@@ -224,12 +215,12 @@ function App() {
               <button
                 key={type}
                 onClick={() =>
-                  setFilter(type as "all" | "active" | "completed")
+                  setFilter(type as any)
                 }
-                className={`px-3 py-1 rounded-md text-xs capitalize transition ${
+                className={`px-3 py-1 rounded ${
                   filter === type
-                    ? "bg-indigo-500 text-white"
-                    : "bg-white/10 hover:bg-white/20"
+                    ? "bg-indigo-500"
+                    : "bg-white/20"
                 }`}
               >
                 {type}
@@ -238,27 +229,31 @@ function App() {
           </div>
         </div>
 
-        <div className="flex gap-3 mb-8">
+        <div className="flex gap-3 mb-6">
           <input
-            className="flex-1 bg-white/20 border border-white/30 p-3 rounded-lg placeholder-slate-300"
-            placeholder="Add a new task..."
+            className="flex-1 p-3 bg-white/20 rounded"
+            placeholder="Add task..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
           <button
-            disabled={loading}
-            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center justify-center"
             onClick={addTask}
+            className="bg-green-600 px-6 rounded"
           >
-            {loading ? <Spinner /> : "Add"}
+            Add
           </button>
         </div>
 
-        <div className="space-y-4">
-
-          {filter === "all" && (
-            <>
-              {tasks.filter(t => !t.completed).map((task) => (
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={filteredTasks.map((t) => t._id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {filteredTasks.map((task) => (
                 <TaskItem
                   key={task._id}
                   task={task}
@@ -266,38 +261,9 @@ function App() {
                   deleteTask={deleteTask}
                 />
               ))}
-
-              {completed > 0 && (
-                <div className="pt-6">
-                  <h3 className="text-slate-400 text-sm uppercase tracking-wider mb-3">
-                    Completed
-                  </h3>
-
-                  {tasks.filter(t => t.completed).map((task) => (
-                    <TaskItem
-                      key={task._id}
-                      task={task}
-                      toggleTask={toggleTask}
-                      deleteTask={deleteTask}
-                      completedStyle
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-
-          {filter !== "all" &&
-            filteredTasks.map((task) => (
-              <TaskItem
-                key={task._id}
-                task={task}
-                toggleTask={toggleTask}
-                deleteTask={deleteTask}
-                completedStyle={task.completed}
-              />
-            ))}
-        </div>
+            </div>
+          </SortableContext>
+        </DndContext>
       </main>
     </div>
   );
@@ -307,8 +273,20 @@ function TaskItem({
   task,
   toggleTask,
   deleteTask,
-  completedStyle = false,
 }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: task._id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
   const [saving, setSaving] = useState(false);
@@ -333,13 +311,19 @@ function TaskItem({
 
   return (
     <div
-      className={`group bg-white/10 backdrop-blur-md border border-white/20 
-      p-5 rounded-xl flex justify-between items-center
-      hover:bg-white/20 transition-all duration-300
-      ${task.completed ? "opacity-70 scale-[0.98]" : "opacity-100"}`}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className="group bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition-all duration-300"
     >
-      {/* LEFT */}
       <div className="flex items-center gap-3 flex-1">
+
+        <div
+          {...listeners}
+          className="cursor-grab text-slate-400 hover:text-white transition"
+        >
+          ☰
+        </div>
 
         <input
           type="checkbox"
@@ -361,14 +345,13 @@ function TaskItem({
                 setIsEditing(false);
               }
             }}
-            className="flex-1 bg-white/20 border border-white/30 
-            p-2 rounded-lg text-white outline-none"
+            className="flex-1 bg-white/20 border border-white/30 p-2 rounded-lg text-white outline-none"
           />
         ) : (
           <span
             onDoubleClick={() => setIsEditing(true)}
-            className={`flex-1 text-lg transition-all duration-300 ${
-              completedStyle
+            className={`flex-1 text-lg transition-all ${
+              task.completed
                 ? "line-through text-slate-400"
                 : "text-white"
             }`}
@@ -378,23 +361,20 @@ function TaskItem({
         )}
       </div>
 
-      {/* RIGHT ACTIONS */}
       <div
         className="flex items-center gap-4 ml-4 
-        transform translate-x-2 group-hover:translate-x-0
         opacity-0 group-hover:opacity-100 
         transition-all duration-300"
       >
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="text-indigo-400 hover:text-indigo-300"
+            className="text-indigo-400 hover:text-indigo-300 transition"
             title="Edit task"
           >
-            {/* SVG ICON */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5"
+              className="w-9 h-9 transition-transform duration-200 group-hover:scale-110"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -403,7 +383,7 @@ function TaskItem({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M11 5h2m-1-1v2m-6.586 9.414a2 2 0 010-2.828l7.172-7.172a2 2 0 012.828 0l2.586 2.586a2 2 0 010 2.828l-7.172 7.172a2 2 0 01-2.828 0L5.414 15.414z"
+                d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"
               />
             </svg>
           </button>
@@ -415,7 +395,7 @@ function TaskItem({
 
         <button
           onClick={() => deleteTask(task._id)}
-          className="text-red-400 hover:text-red-500"
+          className="text-red-400 hover:text-red-500 transition"
         >
           Delete
         </button>
