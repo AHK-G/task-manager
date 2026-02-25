@@ -5,7 +5,6 @@ import { AppError } from "../utils/AppError";
 type AuthRequest = Request & { userId?: string };
 
 
-// ================= GET TASKS =================
 export const getTasks = async (
   req: AuthRequest,
   res: Response,
@@ -13,7 +12,7 @@ export const getTasks = async (
 ) => {
   try {
     const tasks = await Task.find({ user: req.userId }).sort({
-      order: 1, // 🔥 Sort by manual order
+      order: 1,
     });
 
     res.json(tasks);
@@ -23,7 +22,6 @@ export const getTasks = async (
 };
 
 
-// ================= CREATE TASK =================
 export const createTask = async (
   req: AuthRequest,
   res: Response,
@@ -36,7 +34,6 @@ export const createTask = async (
       throw new AppError("Title is required", 400);
     }
 
-    // 🔥 Find last task for this user
     const lastTask = await Task.findOne({ user: req.userId })
       .sort({ order: -1 });
 
@@ -55,7 +52,6 @@ export const createTask = async (
 };
 
 
-// ================= UPDATE TASK =================
 export const updateTask = async (
   req: AuthRequest,
   res: Response,
@@ -85,7 +81,6 @@ export const updateTask = async (
 };
 
 
-// ================= DELETE TASK =================
 export const deleteTask = async (
   req: AuthRequest,
   res: Response,
@@ -108,7 +103,6 @@ export const deleteTask = async (
 };
 
 
-// ================= REORDER TASKS =================
 export const reorderTasks = async (
   req: AuthRequest,
   res: Response,
@@ -116,8 +110,6 @@ export const reorderTasks = async (
 ) => {
   try {
     const { tasks } = req.body;
-    // Expected format:
-    // tasks: [{ id: string, order: number }]
 
     if (!Array.isArray(tasks)) {
       throw new AppError("Invalid reorder payload", 400);
