@@ -6,6 +6,12 @@ https://task-manager-nu-snowy.vercel.app/
 Backend:
 https://task-manager-api-k63u.onrender.com/
 
+
+-- Demo Account --
+
+Email: demo@demo.com
+Password: demo123
+
 --------- Tech Stack ---------
 
 Frontend:
