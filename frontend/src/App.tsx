@@ -244,26 +244,89 @@ function App() {
           </button>
         </div>
 
+        {filter === "all" ? (
+  <>
+
+    <DndContext
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={tasks
+          .filter((t) => !t.completed)
+          .map((t) => t._id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="space-y-3">
+          {tasks
+            .filter((t) => !t.completed)
+            .map((task) => (
+              <TaskItem
+                key={task._id}
+                task={task}
+                toggleTask={toggleTask}
+                deleteTask={deleteTask}
+              />
+            ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+
+    {tasks.some((t) => t.completed) && (
+      <div className="pt-8">
+        <h3 className="text-slate-400 text-sm uppercase tracking-wider mb-3">
+          Completed
+        </h3>
+
         <DndContext
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={filteredTasks.map((t) => t._id)}
+            items={tasks
+              .filter((t) => t.completed)
+              .map((t) => t._id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-3">
-              {filteredTasks.map((task) => (
-                <TaskItem
-                  key={task._id}
-                  task={task}
-                  toggleTask={toggleTask}
-                  deleteTask={deleteTask}
-                />
-              ))}
+              {tasks
+                .filter((t) => t.completed)
+                .map((task) => (
+                  <TaskItem
+                    key={task._id}
+                    task={task}
+                    toggleTask={toggleTask}
+                    deleteTask={deleteTask}
+                  />
+                ))}
             </div>
           </SortableContext>
         </DndContext>
+      </div>
+    )}
+  </>
+) : (
+  <DndContext
+    collisionDetection={closestCenter}
+    onDragEnd={handleDragEnd}
+  >
+    <SortableContext
+      items={filteredTasks.map((t) => t._id)}
+      strategy={verticalListSortingStrategy}
+    >
+      <div className="space-y-3">
+        {filteredTasks.map((task) => (
+          <TaskItem
+            key={task._id}
+            task={task}
+            toggleTask={toggleTask}
+            deleteTask={deleteTask}
+          />
+        ))}
+      </div>
+    </SortableContext>
+  </DndContext>
+)}
       </main>
     </div>
   );
