@@ -8,9 +8,7 @@ type Task = {
 };
 
 const Spinner = () => (
-  <div className="flex justify-center items-center">
-    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-  </div>
+  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
 );
 
 function App() {
@@ -26,6 +24,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
 
   const showSuccess = (message: string) => {
     setSuccess(message);
@@ -34,7 +33,6 @@ function App() {
 
   const validateAuth = () => {
     setError(null);
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email)) {
@@ -56,7 +54,7 @@ function App() {
     try {
       setLoading(true);
       await api.post("/auth/register", { email, password });
-      showSuccess("Account created successfully 🎉");
+      showSuccess("Account created successfully");
       setIsRegisterMode(false);
     } catch (err: any) {
       setError(err.response?.data?.error || "Registration failed");
@@ -98,7 +96,6 @@ function App() {
 
     try {
       setLoading(true);
-      setError(null);
       await api.post("/tasks", { title });
       setTitle("");
       fetchTasks();
@@ -125,10 +122,18 @@ function App() {
   };
 
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchTasks();
-    }
+    if (isLoggedIn) fetchTasks();
   }, [isLoggedIn]);
+
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.completed).length;
+  const active = total - completed;
+
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === "active") return !task.completed;
+    if (filter === "completed") return task.completed;
+    return true;
+  });
 
   if (!isLoggedIn) {
     return (
@@ -167,7 +172,7 @@ function App() {
 
           <button
             disabled={loading}
-            className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50 flex justify-center"
+            className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50 flex items-center justify-center"
             onClick={isRegisterMode ? register : login}
           >
             {loading ? <Spinner /> : isRegisterMode ? "Register" : "Login"}
@@ -206,17 +211,32 @@ function App() {
       </header>
 
       <main className="max-w-2xl mx-auto p-8">
-        {error && (
-          <div className="bg-red-500/20 text-red-300 p-3 mb-6 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
 
-        {success && (
-          <div className="bg-green-500/20 text-green-300 p-3 mb-6 rounded-lg text-sm">
-            {success}
+        <div className="flex justify-between items-center mb-6 text-sm text-slate-300">
+          <div>
+            <span className="mr-4">Total: {total}</span>
+            <span className="mr-4">Active: {active}</span>
+            <span>Completed: {completed}</span>
           </div>
-        )}
+
+          <div className="flex gap-2">
+            {["all", "active", "completed"].map((type) => (
+              <button
+                key={type}
+                onClick={() =>
+                  setFilter(type as "all" | "active" | "completed")
+                }
+                className={`px-3 py-1 rounded-md text-xs capitalize transition ${
+                  filter === type
+                    ? "bg-indigo-500 text-white"
+                    : "bg-white/10 hover:bg-white/20"
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-3 mb-8">
           <input
@@ -227,46 +247,92 @@ function App() {
           />
           <button
             disabled={loading}
-            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex justify-center"
+            className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center justify-center"
             onClick={addTask}
           >
             {loading ? <Spinner /> : "Add"}
           </button>
         </div>
 
-        {tasks.length === 0 && (
-          <div className="text-center text-slate-300 mt-16 text-lg">
-            No tasks yet.
-          </div>
-        )}
-
         <div className="space-y-4">
-          {tasks.map((task) => (
-            <div
-              key={task._id}
-              className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition"
-            >
-              <span
-                onClick={() => toggleTask(task)}
-                className={`cursor-pointer text-lg ${
-                  task.completed
-                    ? "line-through text-slate-400"
-                    : "text-white"
-                }`}
-              >
-                {task.title}
-              </span>
 
-              <button
-                onClick={() => deleteTask(task._id)}
-                className="text-red-400 hover:text-red-500 transition"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
+          {filter === "all" && (
+            <>
+              {tasks.filter(t => !t.completed).map((task) => (
+                <TaskItem
+                  key={task._id}
+                  task={task}
+                  toggleTask={toggleTask}
+                  deleteTask={deleteTask}
+                />
+              ))}
+
+              {completed > 0 && (
+                <div className="pt-6">
+                  <h3 className="text-slate-400 text-sm uppercase tracking-wider mb-3">
+                    Completed
+                  </h3>
+
+                  {tasks.filter(t => t.completed).map((task) => (
+                    <TaskItem
+                      key={task._id}
+                      task={task}
+                      toggleTask={toggleTask}
+                      deleteTask={deleteTask}
+                      completedStyle
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {filter !== "all" &&
+            filteredTasks.map((task) => (
+              <TaskItem
+                key={task._id}
+                task={task}
+                toggleTask={toggleTask}
+                deleteTask={deleteTask}
+                completedStyle={task.completed}
+              />
+            ))}
         </div>
       </main>
+    </div>
+  );
+}
+
+function TaskItem({
+  task,
+  toggleTask,
+  deleteTask,
+  completedStyle = false,
+}: any) {
+  return (
+    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={task.completed}
+          onChange={() => toggleTask(task)}
+          className="w-5 h-5 accent-indigo-500 cursor-pointer"
+        />
+        <span
+          className={`text-lg ${
+            completedStyle ? "line-through text-slate-400" : ""
+          }`}
+        >
+          {task.title}
+        </span>
+      </div>
+
+      <button
+        onClick={() => deleteTask(task._id)}
+        className="text-red-400 hover:text-red-500 transition"
+      >
+        Delete
+      </button>
     </div>
   );
 }
