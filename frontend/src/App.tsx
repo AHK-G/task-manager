@@ -106,6 +106,12 @@ function App() {
     }
   }, [isLoggedIn]);
 
+  const Spinner = () => (
+  <div className="flex justify-center items-center">
+    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
 
   if (!isLoggedIn) {
     return (
@@ -147,11 +153,7 @@ function App() {
             className="w-full bg-indigo-500 text-white py-3 rounded-lg hover:bg-indigo-600 transition disabled:opacity-50"
             onClick={isRegisterMode ? register : login}
           >
-            {loading
-              ? "Please wait..."
-              : isRegisterMode
-              ? "Register"
-              : "Login"}
+            {loading ? <Spinner /> : isRegisterMode ? "Register" : "Login"}
           </button>
 
           <p className="text-center text-sm text-slate-300 mt-6">
@@ -212,7 +214,7 @@ function App() {
             className="bg-green-600 px-6 rounded-lg hover:bg-green-700 transition disabled:opacity-50"
             onClick={addTask}
           >
-            {loading ? "Adding..." : "Add"}
+            {loading ? <Spinner /> : "Add"}
           </button>
         </div>
 
