@@ -325,8 +325,6 @@ function TaskItem({
       await api.put(`/tasks/${task._id}`, {
         title: editValue,
       });
-    } catch {
-      setEditValue(task.title);
     } finally {
       setSaving(false);
       setIsEditing(false);
@@ -334,9 +332,13 @@ function TaskItem({
   };
 
   return (
-    <div className="group bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
-
-      {/* LEFT SIDE */}
+    <div
+      className={`group bg-white/10 backdrop-blur-md border border-white/20 
+      p-5 rounded-xl flex justify-between items-center
+      hover:bg-white/20 transition-all duration-300
+      ${task.completed ? "opacity-70 scale-[0.98]" : "opacity-100"}`}
+    >
+      {/* LEFT */}
       <div className="flex items-center gap-3 flex-1">
 
         <input
@@ -359,13 +361,16 @@ function TaskItem({
                 setIsEditing(false);
               }
             }}
-            className="flex-1 bg-white/20 border border-white/30 p-2 rounded-lg text-white outline-none"
+            className="flex-1 bg-white/20 border border-white/30 
+            p-2 rounded-lg text-white outline-none"
           />
         ) : (
           <span
             onDoubleClick={() => setIsEditing(true)}
-            className={`flex-1 text-lg ${
-              completedStyle ? "line-through text-slate-400" : ""
+            className={`flex-1 text-lg transition-all duration-300 ${
+              completedStyle
+                ? "line-through text-slate-400"
+                : "text-white"
             }`}
           >
             {task.title}
@@ -373,22 +378,44 @@ function TaskItem({
         )}
       </div>
 
-      {/* RIGHT SIDE ACTIONS */}
-      <div className="flex items-center gap-4 ml-4">
-
+      {/* RIGHT ACTIONS */}
+      <div
+        className="flex items-center gap-4 ml-4 
+        transform translate-x-2 group-hover:translate-x-0
+        opacity-0 group-hover:opacity-100 
+        transition-all duration-300"
+      >
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="opacity-0 group-hover:opacity-100 transition text-indigo-400 hover:text-indigo-300"
+            className="text-indigo-400 hover:text-indigo-300"
             title="Edit task"
           >
-            ✏️
+            {/* SVG ICON */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M11 5h2m-1-1v2m-6.586 9.414a2 2 0 010-2.828l7.172-7.172a2 2 0 012.828 0l2.586 2.586a2 2 0 010 2.828l-7.172 7.172a2 2 0 01-2.828 0L5.414 15.414z"
+              />
+            </svg>
           </button>
+        )}
+
+        {saving && (
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
         )}
 
         <button
           onClick={() => deleteTask(task._id)}
-          className="text-red-400 hover:text-red-500 transition"
+          className="text-red-400 hover:text-red-500"
         >
           Delete
         </button>
