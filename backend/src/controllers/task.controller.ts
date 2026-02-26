@@ -4,11 +4,10 @@ import { AppError } from "../utils/AppError";
 
 type AuthRequest = Request & { userId?: string };
 
-
 export const getTasks = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const tasks = await Task.find({ user: req.userId }).sort({
@@ -21,14 +20,13 @@ export const getTasks = async (
   }
 };
 
-
 export const createTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const { title, priority } = req.body;
+    const { title, priority, dueDate } = req.body;
 
     if (!title || title.trim() === "") {
       throw new AppError("Title is required", 400);
@@ -39,9 +37,8 @@ export const createTask = async (
     const task = await Task.create({
       title,
       user: req.userId,
-      priority: validPriorities.includes(priority)
-        ? priority
-        : "medium",
+      priority: validPriorities.includes(priority) ? priority : "medium",
+      dueDate: dueDate ? new Date(dueDate) : undefined,
     });
 
     res.status(201).json(task);
@@ -50,22 +47,19 @@ export const createTask = async (
   }
 };
 
-
 export const updateTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const { completed, title, priority } = req.body;
+    const { completed, title, priority, dueDate } = req.body;
 
     const updateData: any = {};
 
-    if (completed !== undefined)
-      updateData.completed = completed;
+    if (completed !== undefined) updateData.completed = completed;
 
-    if (title !== undefined)
-      updateData.title = title;
+    if (title !== undefined) updateData.title = title;
 
     if (priority !== undefined) {
       const validPriorities = ["low", "medium", "high"];
@@ -74,10 +68,14 @@ export const updateTask = async (
       }
     }
 
+    if (dueDate !== undefined) {
+      updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    }
+
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
       updateData,
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     );
 
     if (!task) {
@@ -90,11 +88,10 @@ export const updateTask = async (
   }
 };
 
-
 export const deleteTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const task = await Task.findOneAndDelete({
@@ -112,11 +109,10 @@ export const deleteTask = async (
   }
 };
 
-
 export const reorderTasks = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { tasks } = req.body;
@@ -128,7 +124,7 @@ export const reorderTasks = async (
     for (const item of tasks) {
       await Task.findOneAndUpdate(
         { _id: item.id, user: req.userId },
-        { order: item.order }
+        { order: item.order },
       );
     }
 

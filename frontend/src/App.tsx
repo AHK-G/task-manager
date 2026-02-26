@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 
-import {
-  DndContext,
-  closestCenter,
-} from "@dnd-kit/core";
+import { DndContext, closestCenter } from "@dnd-kit/core";
 
 import {
   arrayMove,
@@ -20,29 +17,22 @@ type Task = {
   title: string;
   completed: boolean;
   priority: "low" | "medium" | "high";
+  dueDate?: string;
 };
 
 function App() {
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("token")
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
-  const [filter, setFilter] = useState<
-    "all" | "active" | "completed"
-  >("all");
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
 
   const [error, setError] = useState<string | null>(null);
 
- const [priority, setPriority] = useState<
-  "low" | "medium" | "high"
->("medium");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
 
   const register = async () => {
     try {
@@ -74,33 +64,33 @@ function App() {
     setTasks([]);
   };
 
-
   const fetchTasks = async () => {
     const res = await api.get("/tasks");
+    console.log("TASKS FROM API:", res.data);
     setTasks(res.data);
   };
 
-const addTask = async () => {
-  if (!title.trim()) return;
+  const addTask = async () => {
+    if (!title.trim()) return;
 
-  const res = await api.post("/tasks", {
-    title,
-    priority,
-  });
+    const res = await api.post("/tasks", {
+      title,
+      priority,
+      dueDate: dueDate || undefined,
+    });
 
-  setTasks((prev) => [...prev, res.data]);
-  setTitle("");
-  setPriority("medium");
-};
+    setTasks((prev) => [...prev, res.data]);
+    setTitle("");
+    setPriority("medium");
+    setDueDate("");
+  };
 
   const toggleTask = async (task: Task) => {
     const res = await api.put(`/tasks/${task._id}`, {
       completed: !task.completed,
     });
 
-    setTasks((prev) =>
-      prev.map((t) => (t._id === task._id ? res.data : t))
-    );
+    setTasks((prev) => prev.map((t) => (t._id === task._id ? res.data : t)));
   };
 
   const deleteTask = async (id: string) => {
@@ -108,18 +98,13 @@ const addTask = async () => {
     setTasks((prev) => prev.filter((t) => t._id !== id));
   };
 
-
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
 
     if (!over || active.id === over.id) return;
 
-    const oldIndex = tasks.findIndex(
-      (t) => t._id === active.id
-    );
-    const newIndex = tasks.findIndex(
-      (t) => t._id === over.id
-    );
+    const oldIndex = tasks.findIndex((t) => t._id === active.id);
+    const newIndex = tasks.findIndex((t) => t._id === over.id);
 
     const newTasks = arrayMove(tasks, oldIndex, newIndex);
     setTasks(newTasks);
@@ -131,11 +116,10 @@ const addTask = async () => {
       })),
     });
   };
-
+  const [dueDate, setDueDate] = useState("");
   useEffect(() => {
     if (isLoggedIn) fetchTasks();
   }, [isLoggedIn]);
-
 
   const filteredTasks = tasks.filter((task) => {
     if (filter === "active") return !task.completed;
@@ -146,7 +130,6 @@ const addTask = async () => {
   const total = tasks.length;
   const completed = tasks.filter((t) => t.completed).length;
   const active = total - completed;
-
 
   if (!isLoggedIn) {
     return (
@@ -204,16 +187,12 @@ const addTask = async () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white">
       <header className="flex justify-between items-center p-6">
         <h1 className="text-2xl font-bold">Your Tasks</h1>
-        <button
-          onClick={logout}
-          className="bg-red-500 px-4 py-2 rounded"
-        >
+        <button onClick={logout} className="bg-red-500 px-4 py-2 rounded">
           Logout
         </button>
       </header>
 
       <main className="max-w-2xl mx-auto p-6">
-
         <div className="flex justify-between mb-4 text-sm text-slate-300">
           <div>
             Total: {total} | Active: {active} | Completed: {completed}
@@ -223,13 +202,9 @@ const addTask = async () => {
             {["all", "active", "completed"].map((type) => (
               <button
                 key={type}
-                onClick={() =>
-                  setFilter(type as any)
-                }
+                onClick={() => setFilter(type as any)}
                 className={`px-3 py-1 rounded ${
-                  filter === type
-                    ? "bg-indigo-500"
-                    : "bg-white/20"
+                  filter === type ? "bg-indigo-500" : "bg-white/20"
                 }`}
               >
                 {type}
@@ -239,81 +214,102 @@ const addTask = async () => {
         </div>
 
         <div className="flex gap-3 mb-6 items-center">
-  <input
-    className="flex-1 p-3 bg-white/20 rounded"
-    placeholder="Add task..."
-    value={title}
-    onChange={(e) => setTitle(e.target.value)}
-  />
+          <input
+            className="flex-1 p-3 bg-white/20 rounded"
+            placeholder="Add task..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
 
-  <select
-    value={priority}
-    onChange={(e) =>
-      setPriority(e.target.value as "low" | "medium" | "high")
-    }
-    className="bg-slate-800 text-white px-3 py-3 rounded border border-white/20"
-  >
-    <option value="low">Low</option>
-    <option value="medium">Medium</option>
-    <option value="high">High</option>
-  </select>
-
-  <button
-    onClick={addTask}
-    className="bg-green-600 px-6 py-3 rounded"
-  >
-    Add
-  </button>
-</div>
+          <select
+            value={priority}
+            onChange={(e) =>
+              setPriority(e.target.value as "low" | "medium" | "high")
+            }
+            className="bg-slate-800 text-white px-3 py-3 rounded border border-white/20"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="bg-slate-800 text-white px-3 py-3 rounded border border-white/20"
+          />
+          <button onClick={addTask} className="bg-green-600 px-6 py-3 rounded">
+            Add
+          </button>
+        </div>
 
         {filter === "all" ? (
-  <>
+          <>
+            <DndContext
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={tasks.filter((t) => !t.completed).map((t) => t._id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {tasks
+                    .filter((t) => !t.completed)
+                    .map((task) => (
+                      <TaskItem
+                        key={task._id}
+                        task={task}
+                        toggleTask={toggleTask}
+                        deleteTask={deleteTask}
+                      />
+                    ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
-    <DndContext
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={tasks
-          .filter((t) => !t.completed)
-          .map((t) => t._id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="space-y-3">
-          {tasks
-            .filter((t) => !t.completed)
-            .map((task) => (
-              <TaskItem
-                key={task._id}
-                task={task}
-                toggleTask={toggleTask}
-                deleteTask={deleteTask}
-              />
-            ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+            {tasks.some((t) => t.completed) && (
+              <div className="pt-8">
+                <h3 className="text-slate-400 text-sm uppercase tracking-wider mb-3">
+                  Completed
+                </h3>
 
-    {tasks.some((t) => t.completed) && (
-      <div className="pt-8">
-        <h3 className="text-slate-400 text-sm uppercase tracking-wider mb-3">
-          Completed
-        </h3>
-
-        <DndContext
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={tasks
-              .filter((t) => t.completed)
-              .map((t) => t._id)}
-            strategy={verticalListSortingStrategy}
+                <DndContext
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={tasks.filter((t) => t.completed).map((t) => t._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-3">
+                      {tasks
+                        .filter((t) => t.completed)
+                        .map((task) => (
+                          <TaskItem
+                            key={task._id}
+                            task={task}
+                            toggleTask={toggleTask}
+                            deleteTask={deleteTask}
+                          />
+                        ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+          </>
+        ) : (
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
-            <div className="space-y-3">
-              {tasks
-                .filter((t) => t.completed)
-                .map((task) => (
+            <SortableContext
+              items={filteredTasks.map((t) => t._id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {filteredTasks.map((task) => (
                   <TaskItem
                     key={task._id}
                     task={task}
@@ -321,51 +317,18 @@ const addTask = async () => {
                     deleteTask={deleteTask}
                   />
                 ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </div>
-    )}
-  </>
-) : (
-  <DndContext
-    collisionDetection={closestCenter}
-    onDragEnd={handleDragEnd}
-  >
-    <SortableContext
-      items={filteredTasks.map((t) => t._id)}
-      strategy={verticalListSortingStrategy}
-    >
-      <div className="space-y-3">
-        {filteredTasks.map((task) => (
-          <TaskItem
-            key={task._id}
-            task={task}
-            toggleTask={toggleTask}
-            deleteTask={deleteTask}
-          />
-        ))}
-      </div>
-    </SortableContext>
-  </DndContext>
-)}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
       </main>
     </div>
   );
 }
 
-function TaskItem({
-  task,
-  toggleTask,
-  deleteTask,
-}: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: task._id });
+function TaskItem({ task, toggleTask, deleteTask }: any) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: task._id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -374,8 +337,17 @@ function TaskItem({
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
-  const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const due = task.dueDate ? new Date(task.dueDate) : null;
+
+  const isOverdue = due && !task.completed && due < today;
+
+  const isDueToday =
+    due && !task.completed && due.toDateString() === today.toDateString();
 
   const saveTitle = async () => {
     if (!editValue.trim()) {
@@ -393,20 +365,7 @@ function TaskItem({
       setSaving(false);
       setIsEditingTitle(false);
     }
-  };
-
-  const changePriority = async (
-    newPriority: "low" | "medium" | "high"
-  ) => {
-    try {
-      setSaving(true);
-      await api.put(`/tasks/${task._id}`, {
-        priority: newPriority,
-      });
-    } finally {
-      setSaving(false);
-      setIsEditingPriority(false);
-    }
+    console.log(task);
   };
 
   return (
@@ -414,11 +373,17 @@ function TaskItem({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="group bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition-all duration-300"
+      className={`group backdrop-blur-md border p-5 rounded-xl flex justify-between items-center transition-all duration-300
+        ${
+          isOverdue
+            ? "bg-red-900/30 border-red-500/40"
+            : isDueToday
+              ? "bg-yellow-900/30 border-yellow-500/40"
+              : "bg-white/10 border-white/20 hover:bg-white/20"
+        }
+      `}
     >
-      {/* LEFT SIDE */}
-      <div className="flex items-center gap-3 flex-1">
-
+      <div className="flex items-center gap-3 flex-1 min-w-0">
         <div
           {...listeners}
           className="cursor-grab text-slate-400 hover:text-white transition"
@@ -430,7 +395,7 @@ function TaskItem({
           type="checkbox"
           checked={task.completed}
           onChange={() => toggleTask(task)}
-          className="w-5 h-5 accent-indigo-500 cursor-pointer"
+          className="w-5 h-5 accent-indigo-500"
         />
 
         {isEditingTitle ? (
@@ -451,10 +416,8 @@ function TaskItem({
         ) : (
           <span
             onDoubleClick={() => setIsEditingTitle(true)}
-            className={`text-lg ${
-              task.completed
-                ? "line-through text-slate-400"
-                : "text-white"
+            className={`text-lg truncate ${
+              task.completed ? "line-through text-slate-400" : "text-white"
             }`}
           >
             {task.title}
@@ -462,78 +425,67 @@ function TaskItem({
         )}
       </div>
 
-      {/* RIGHT SIDE */}
-<div className="flex items-center gap-4 ml-4">
+      <div className="flex items-center gap-4 ml-6">
+        <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          {saving && (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
 
-  {/* Hover-only actions */}
-  <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <button
+            onClick={() => setIsEditingTitle(true)}
+            className="text-indigo-400 hover:text-indigo-300 transition"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"
+              />
+            </svg>
+          </button>
 
-    {saving && (
-      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-    )}
+          <button
+            onClick={() => deleteTask(task._id)}
+            className="text-red-400 hover:text-red-500 transition"
+          >
+            Delete
+          </button>
+        </div>
 
-    {!isEditingTitle && (
-      <button
-        onClick={() => setIsEditingTitle(true)}
-        className="text-indigo-400 hover:text-indigo-300 transition"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"
-          />
-        </svg>
-      </button>
-    )}
-
-    <button
-      onClick={() => deleteTask(task._id)}
-      className="text-red-400 hover:text-red-500 transition"
-    >
-      Delete
-    </button>
-  </div>
-
-  {/* Priority pinned far right */}
-  {isEditingPriority ? (
-    <select
-      autoFocus
-      defaultValue={task.priority}
-      onBlur={() => setIsEditingPriority(false)}
-      onChange={(e) =>
-        changePriority(
-          e.target.value as "low" | "medium" | "high"
-        )
-      }
-      className="bg-slate-800 text-white px-2 py-1 rounded text-xs"
-    >
-      <option value="low">Low</option>
-      <option value="medium">Medium</option>
-      <option value="high">High</option>
-    </select>
-  ) : (
-    <span
-      onClick={() => setIsEditingPriority(true)}
-      className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer transition ${
-        task.priority === "high"
-          ? "bg-red-500/30 text-red-400"
-          : task.priority === "medium"
-          ? "bg-yellow-500/30 text-yellow-300"
-          : "bg-blue-500/30 text-blue-300"
-      }`}
-    >
-      {task.priority}
-    </span>
-  )}
-</div>
+        <div className="flex items-center gap-3">
+          {task.dueDate && (
+            <span
+              className={`text-xs px-2 py-1 rounded-full font-medium ${
+                isOverdue
+                  ? "bg-red-600/40 text-red-300"
+                  : isDueToday
+                    ? "bg-yellow-500/30 text-yellow-200"
+                    : "bg-white/10 text-slate-300"
+              }`}
+            >
+              {new Date(task.dueDate).toLocaleDateString()}
+            </span>
+          )}
+          <span
+            className={`text-xs px-2 py-1 rounded-full font-medium ${
+              task.priority === "high"
+                ? "bg-red-500/30 text-red-400"
+                : task.priority === "medium"
+                  ? "bg-yellow-500/30 text-yellow-300"
+                  : "bg-blue-500/30 text-blue-300"
+            }`}
+          >
+            {task.priority}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

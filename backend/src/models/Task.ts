@@ -6,6 +6,7 @@ export interface ITask extends Document {
   user: mongoose.Types.ObjectId;
   order: number;
   priority: "low" | "medium" | "high";
+  dueDate?: Date;
 }
 
 const taskSchema = new Schema<ITask>(
@@ -33,8 +34,11 @@ const taskSchema = new Schema<ITask>(
       enum: ["low", "medium", "high"],
       default: "medium",
     },
+    dueDate: {
+      type: Date,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<ITask>("Task", taskSchema);
