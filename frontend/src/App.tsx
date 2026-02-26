@@ -19,6 +19,7 @@ type Task = {
   _id: string;
   title: string;
   completed: boolean;
+  priority: "low" | "medium" | "high";
 };
 
 function App() {
@@ -39,6 +40,9 @@ function App() {
 
   const [error, setError] = useState<string | null>(null);
 
+ const [priority, setPriority] = useState<
+  "low" | "medium" | "high"
+>("medium");
 
   const register = async () => {
     try {
@@ -76,13 +80,18 @@ function App() {
     setTasks(res.data);
   };
 
-  const addTask = async () => {
-    if (!title.trim()) return;
+const addTask = async () => {
+  if (!title.trim()) return;
 
-    const res = await api.post("/tasks", { title });
-    setTasks((prev) => [...prev, res.data]);
-    setTitle("");
-  };
+  const res = await api.post("/tasks", {
+    title,
+    priority,
+  });
+
+  setTasks((prev) => [...prev, res.data]);
+  setTitle("");
+  setPriority("medium");
+};
 
   const toggleTask = async (task: Task) => {
     const res = await api.put(`/tasks/${task._id}`, {
@@ -229,20 +238,33 @@ function App() {
           </div>
         </div>
 
-        <div className="flex gap-3 mb-6">
-          <input
-            className="flex-1 p-3 bg-white/20 rounded"
-            placeholder="Add task..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <button
-            onClick={addTask}
-            className="bg-green-600 px-6 rounded"
-          >
-            Add
-          </button>
-        </div>
+        <div className="flex gap-3 mb-6 items-center">
+  <input
+    className="flex-1 p-3 bg-white/20 rounded"
+    placeholder="Add task..."
+    value={title}
+    onChange={(e) => setTitle(e.target.value)}
+  />
+
+  <select
+    value={priority}
+    onChange={(e) =>
+      setPriority(e.target.value as "low" | "medium" | "high")
+    }
+    className="bg-slate-800 text-white px-3 py-3 rounded border border-white/20"
+  >
+    <option value="low">Low</option>
+    <option value="medium">Medium</option>
+    <option value="high">High</option>
+  </select>
+
+  <button
+    onClick={addTask}
+    className="bg-green-600 px-6 py-3 rounded"
+  >
+    Add
+  </button>
+</div>
 
         {filter === "all" ? (
   <>
@@ -350,14 +372,15 @@ function TaskItem({
     transition,
   };
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
+  const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const saveEdit = async () => {
+  const saveTitle = async () => {
     if (!editValue.trim()) {
       setEditValue(task.title);
-      setIsEditing(false);
+      setIsEditingTitle(false);
       return;
     }
 
@@ -368,7 +391,21 @@ function TaskItem({
       });
     } finally {
       setSaving(false);
-      setIsEditing(false);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const changePriority = async (
+    newPriority: "low" | "medium" | "high"
+  ) => {
+    try {
+      setSaving(true);
+      await api.put(`/tasks/${task._id}`, {
+        priority: newPriority,
+      });
+    } finally {
+      setSaving(false);
+      setIsEditingPriority(false);
     }
   };
 
@@ -379,6 +416,7 @@ function TaskItem({
       {...attributes}
       className="group bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl flex justify-between items-center hover:bg-white/20 transition-all duration-300"
     >
+      {/* LEFT SIDE */}
       <div className="flex items-center gap-3 flex-1">
 
         <div
@@ -395,25 +433,25 @@ function TaskItem({
           className="w-5 h-5 accent-indigo-500 cursor-pointer"
         />
 
-        {isEditing ? (
+        {isEditingTitle ? (
           <input
             autoFocus
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            onBlur={saveEdit}
+            onBlur={saveTitle}
             onKeyDown={(e) => {
-              if (e.key === "Enter") saveEdit();
+              if (e.key === "Enter") saveTitle();
               if (e.key === "Escape") {
                 setEditValue(task.title);
-                setIsEditing(false);
+                setIsEditingTitle(false);
               }
             }}
             className="flex-1 bg-white/20 border border-white/30 p-2 rounded-lg text-white outline-none"
           />
         ) : (
           <span
-            onDoubleClick={() => setIsEditing(true)}
-            className={`flex-1 text-lg transition-all ${
+            onDoubleClick={() => setIsEditingTitle(true)}
+            className={`text-lg ${
               task.completed
                 ? "line-through text-slate-400"
                 : "text-white"
@@ -424,45 +462,78 @@ function TaskItem({
         )}
       </div>
 
-      <div
-        className="flex items-center gap-4 ml-4 
-        opacity-0 group-hover:opacity-100 
-        transition-all duration-300"
+      {/* RIGHT SIDE */}
+<div className="flex items-center gap-4 ml-4">
+
+  {/* Hover-only actions */}
+  <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
+
+    {saving && (
+      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+    )}
+
+    {!isEditingTitle && (
+      <button
+        onClick={() => setIsEditingTitle(true)}
+        className="text-indigo-400 hover:text-indigo-300 transition"
       >
-        {!isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="text-indigo-400 hover:text-indigo-300 transition"
-            title="Edit task"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-9 h-9 transition-transform duration-200 group-hover:scale-110"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"
-              />
-            </svg>
-          </button>
-        )}
-
-        {saving && (
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-        )}
-
-        <button
-          onClick={() => deleteTask(task._id)}
-          className="text-red-400 hover:text-red-500 transition"
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
         >
-          Delete
-        </button>
-      </div>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z"
+          />
+        </svg>
+      </button>
+    )}
+
+    <button
+      onClick={() => deleteTask(task._id)}
+      className="text-red-400 hover:text-red-500 transition"
+    >
+      Delete
+    </button>
+  </div>
+
+  {/* Priority pinned far right */}
+  {isEditingPriority ? (
+    <select
+      autoFocus
+      defaultValue={task.priority}
+      onBlur={() => setIsEditingPriority(false)}
+      onChange={(e) =>
+        changePriority(
+          e.target.value as "low" | "medium" | "high"
+        )
+      }
+      className="bg-slate-800 text-white px-2 py-1 rounded text-xs"
+    >
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+  ) : (
+    <span
+      onClick={() => setIsEditingPriority(true)}
+      className={`text-xs px-2 py-1 rounded-full font-medium cursor-pointer transition ${
+        task.priority === "high"
+          ? "bg-red-500/30 text-red-400"
+          : task.priority === "medium"
+          ? "bg-yellow-500/30 text-yellow-300"
+          : "bg-blue-500/30 text-blue-300"
+      }`}
+    >
+      {task.priority}
+    </span>
+  )}
+</div>
     </div>
   );
 }

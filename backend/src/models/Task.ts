@@ -1,10 +1,19 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const taskSchema = new mongoose.Schema(
+export interface ITask extends Document {
+  title: string;
+  completed: boolean;
+  user: mongoose.Types.ObjectId;
+  order: number;
+  priority: "low" | "medium" | "high";
+}
+
+const taskSchema = new Schema<ITask>(
   {
     title: {
       type: String,
       required: true,
+      trim: true,
     },
     completed: {
       type: Boolean,
@@ -17,10 +26,15 @@ const taskSchema = new mongoose.Schema(
     },
     order: {
       type: Number,
-      required: true,
+      default: 0,
+    },
+    priority: {
+      type: String,
+      enum: ["low", "medium", "high"],
+      default: "medium",
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Task", taskSchema);
+export default mongoose.model<ITask>("Task", taskSchema);

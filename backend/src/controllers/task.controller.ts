@@ -28,21 +28,20 @@ export const createTask = async (
   next: NextFunction
 ) => {
   try {
-    const { title } = req.body;
+    const { title, priority } = req.body;
 
     if (!title || title.trim() === "") {
       throw new AppError("Title is required", 400);
     }
 
-    const lastTask = await Task.findOne({ user: req.userId })
-      .sort({ order: -1 });
-
-    const nextOrder = lastTask ? lastTask.order + 1 : 0;
+    const validPriorities = ["low", "medium", "high"];
 
     const task = await Task.create({
       title,
       user: req.userId,
-      order: nextOrder,
+      priority: validPriorities.includes(priority)
+        ? priority
+        : "medium",
     });
 
     res.status(201).json(task);
@@ -58,11 +57,22 @@ export const updateTask = async (
   next: NextFunction
 ) => {
   try {
-    const { completed, title } = req.body;
+    const { completed, title, priority } = req.body;
 
     const updateData: any = {};
-    if (completed !== undefined) updateData.completed = completed;
-    if (title !== undefined) updateData.title = title;
+
+    if (completed !== undefined)
+      updateData.completed = completed;
+
+    if (title !== undefined)
+      updateData.title = title;
+
+    if (priority !== undefined) {
+      const validPriorities = ["low", "medium", "high"];
+      if (validPriorities.includes(priority)) {
+        updateData.priority = priority;
+      }
+    }
 
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
