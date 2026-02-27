@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-
 import { DndContext, closestCenter } from "@dnd-kit/core";
-
 import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
-
 import { CSS } from "@dnd-kit/utilities";
 
 type Task = {
@@ -23,16 +20,18 @@ type Task = {
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("token")
+  );
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
-
+  const [priority, setPriority] = useState<
+    "low" | "medium" | "high"
+  >("medium");
+  const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
 
   const register = async () => {
     try {
@@ -66,7 +65,6 @@ function App() {
 
   const fetchTasks = async () => {
     const res = await api.get("/tasks");
-    console.log("TASKS FROM API:", res.data);
     setTasks(res.data);
   };
 
@@ -90,7 +88,9 @@ function App() {
       completed: !task.completed,
     });
 
-    setTasks((prev) => prev.map((t) => (t._id === task._id ? res.data : t)));
+    setTasks((prev) =>
+      prev.map((t) => (t._id === task._id ? res.data : t))
+    );
   };
 
   const deleteTask = async (id: string) => {
@@ -100,11 +100,14 @@ function App() {
 
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
-
     if (!over || active.id === over.id) return;
 
-    const oldIndex = tasks.findIndex((t) => t._id === active.id);
-    const newIndex = tasks.findIndex((t) => t._id === over.id);
+    const oldIndex = tasks.findIndex(
+      (t) => t._id === active.id
+    );
+    const newIndex = tasks.findIndex(
+      (t) => t._id === over.id
+    );
 
     const newTasks = arrayMove(tasks, oldIndex, newIndex);
     setTasks(newTasks);
@@ -116,20 +119,42 @@ function App() {
       })),
     });
   };
-  const [dueDate, setDueDate] = useState("");
+
   useEffect(() => {
     if (isLoggedIn) fetchTasks();
   }, [isLoggedIn]);
 
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === "active") return !task.completed;
-    if (filter === "completed") return task.completed;
-    return true;
-  });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const total = tasks.length;
-  const completed = tasks.filter((t) => t.completed).length;
-  const active = total - completed;
+  const isWithinThreeDays = (dateString?: string) => {
+    if (!dateString) return false;
+
+    const due = new Date(dateString);
+    due.setHours(0, 0, 0, 0);
+
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.floor(
+      diffTime / (1000 * 60 * 60 * 24)
+    );
+
+    return diffDays >= 0 && diffDays <= 3;
+  };
+
+  const urgentTasks = tasks.filter(
+    (task) =>
+      !task.completed &&
+      task.dueDate &&
+      isWithinThreeDays(task.dueDate)
+  );
+
+  const normalTasks = tasks.filter(
+    (task) =>
+      !task.completed &&
+      !urgentTasks.some((t) => t._id === task._id)
+  );
+
+  const completedTasks = tasks.filter((t) => t.completed);
 
   if (!isLoggedIn) {
     return (
@@ -193,26 +218,6 @@ function App() {
       </header>
 
       <main className="max-w-2xl mx-auto p-6">
-        <div className="flex justify-between mb-4 text-sm text-slate-300">
-          <div>
-            Total: {total} | Active: {active} | Completed: {completed}
-          </div>
-
-          <div className="flex gap-2">
-            {["all", "active", "completed"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilter(type as any)}
-                className={`px-3 py-1 rounded ${
-                  filter === type ? "bg-indigo-500" : "bg-white/20"
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="flex gap-3 mb-6 items-center">
           <input
             className="flex-1 p-3 bg-white/20 rounded"
@@ -224,7 +229,7 @@ function App() {
           <select
             value={priority}
             onChange={(e) =>
-              setPriority(e.target.value as "low" | "medium" | "high")
+              setPriority(e.target.value as any)
             }
             className="bg-slate-800 text-white px-3 py-3 rounded border border-white/20"
           >
@@ -232,84 +237,52 @@ function App() {
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
+
           <input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             className="bg-slate-800 text-white px-3 py-3 rounded border border-white/20"
           />
-          <button onClick={addTask} className="bg-green-600 px-6 py-3 rounded">
+
+          <button
+            onClick={addTask}
+            className="bg-green-600 px-6 py-3 rounded"
+          >
             Add
           </button>
         </div>
 
-        {filter === "all" ? (
+        {urgentTasks.length > 0 && (
           <>
-            <DndContext
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={tasks.filter((t) => !t.completed).map((t) => t._id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-3">
-                  {tasks
-                    .filter((t) => !t.completed)
-                    .map((task) => (
-                      <TaskItem
-                        key={task._id}
-                        task={task}
-                        toggleTask={toggleTask}
-                        deleteTask={deleteTask}
-                      />
-                    ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-
-            {tasks.some((t) => t.completed) && (
-              <div className="pt-8">
-                <h3 className="text-slate-400 text-sm uppercase tracking-wider mb-3">
-                  Completed
-                </h3>
-
-                <DndContext
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={tasks.filter((t) => t.completed).map((t) => t._id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-3">
-                      {tasks
-                        .filter((t) => t.completed)
-                        .map((task) => (
-                          <TaskItem
-                            key={task._id}
-                            task={task}
-                            toggleTask={toggleTask}
-                            deleteTask={deleteTask}
-                          />
-                        ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              </div>
-            )}
+            <h3 className="text-red-400 text-sm uppercase tracking-wider mb-3">
+              Urgent (Next 3 Days)
+            </h3>
+            <div className="space-y-3 mb-8">
+              {urgentTasks.map((task) => (
+                <TaskItem
+                  key={task._id}
+                  task={task}
+                  toggleTask={toggleTask}
+                  deleteTask={deleteTask}
+                  disableDrag
+                />
+              ))}
+            </div>
           </>
-        ) : (
+        )}
+
+        {normalTasks.length > 0 && (
           <DndContext
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={filteredTasks.map((t) => t._id)}
+              items={normalTasks.map((t) => t._id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-3">
-                {filteredTasks.map((task) => (
+                {normalTasks.map((task) => (
                   <TaskItem
                     key={task._id}
                     task={task}
@@ -321,14 +294,43 @@ function App() {
             </SortableContext>
           </DndContext>
         )}
+
+        {completedTasks.length > 0 && (
+          <div className="pt-8">
+            <h3 className="text-slate-400 text-sm uppercase tracking-wider mb-3">
+              Completed
+            </h3>
+            <div className="space-y-3">
+              {completedTasks.map((task) => (
+                <TaskItem
+                  key={task._id}
+                  task={task}
+                  toggleTask={toggleTask}
+                  deleteTask={deleteTask}
+                  disableDrag
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
-function TaskItem({ task, toggleTask, deleteTask }: any) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: task._id });
+function TaskItem({
+  task,
+  toggleTask,
+  deleteTask,
+  disableDrag = false,
+}: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: task._id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -343,11 +345,7 @@ function TaskItem({ task, toggleTask, deleteTask }: any) {
   today.setHours(0, 0, 0, 0);
 
   const due = task.dueDate ? new Date(task.dueDate) : null;
-
   const isOverdue = due && !task.completed && due < today;
-
-  const isDueToday =
-    due && !task.completed && due.toDateString() === today.toDateString();
 
   const saveTitle = async () => {
     if (!editValue.trim()) {
@@ -365,31 +363,28 @@ function TaskItem({ task, toggleTask, deleteTask }: any) {
       setSaving(false);
       setIsEditingTitle(false);
     }
-    console.log(task);
   };
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className={`group backdrop-blur-md border p-5 rounded-xl flex justify-between items-center transition-all duration-300
-        ${
-          isOverdue
-            ? "bg-red-900/30 border-red-500/40"
-            : isDueToday
-              ? "bg-yellow-900/30 border-yellow-500/40"
-              : "bg-white/10 border-white/20 hover:bg-white/20"
-        }
-      `}
+      style={disableDrag ? undefined : style}
+      {...(disableDrag ? {} : attributes)}
+      className={`group backdrop-blur-md border p-5 rounded-xl flex justify-between items-center transition-all duration-300 ${
+        isOverdue
+          ? "bg-red-900/30 border-red-500/40"
+          : "bg-white/10 border-white/20 hover:bg-white/20"
+      }`}
     >
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div
-          {...listeners}
-          className="cursor-grab text-slate-400 hover:text-white transition"
-        >
-          ☰
-        </div>
+        {!disableDrag && (
+          <div
+            {...listeners}
+            className="cursor-grab text-slate-400 hover:text-white transition"
+          >
+            ☰
+          </div>
+        )}
 
         <input
           type="checkbox"
@@ -417,7 +412,9 @@ function TaskItem({ task, toggleTask, deleteTask }: any) {
           <span
             onDoubleClick={() => setIsEditingTitle(true)}
             className={`text-lg truncate ${
-              task.completed ? "line-through text-slate-400" : "text-white"
+              task.completed
+                ? "line-through text-slate-400"
+                : "text-white"
             }`}
           >
             {task.title}
@@ -437,7 +434,7 @@ function TaskItem({ task, toggleTask, deleteTask }: any) {
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5"
+              className="w-8 h-8"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -461,25 +458,18 @@ function TaskItem({ task, toggleTask, deleteTask }: any) {
 
         <div className="flex items-center gap-3">
           {task.dueDate && (
-            <span
-              className={`text-xs px-2 py-1 rounded-full font-medium ${
-                isOverdue
-                  ? "bg-red-600/40 text-red-300"
-                  : isDueToday
-                    ? "bg-yellow-500/30 text-yellow-200"
-                    : "bg-white/10 text-slate-300"
-              }`}
-            >
+            <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-slate-300">
               {new Date(task.dueDate).toLocaleDateString()}
             </span>
           )}
+
           <span
             className={`text-xs px-2 py-1 rounded-full font-medium ${
               task.priority === "high"
                 ? "bg-red-500/30 text-red-400"
                 : task.priority === "medium"
-                  ? "bg-yellow-500/30 text-yellow-300"
-                  : "bg-blue-500/30 text-blue-300"
+                ? "bg-yellow-500/30 text-yellow-300"
+                : "bg-blue-500/30 text-blue-300"
             }`}
           >
             {task.priority}
