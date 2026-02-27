@@ -22,9 +22,9 @@ export default function AddTaskForm({
   onAdd,
 }: Props) {
   return (
-    <div className="flex gap-3 mb-6 items-center">
+    <div className="flex flex-col sm:flex-row gap-3 mb-6">
       <input
-        className="flex-1 p-3 bg-white/20 rounded"
+        className="w-full sm:flex-1 p-3 bg-white/20 rounded"
         placeholder="Add task..."
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -51,7 +51,7 @@ export default function AddTaskForm({
 
       <button
         onClick={onAdd}
-        className="bg-green-600 px-6 py-3 rounded"
+        className="w-full sm:w-auto bg-green-600 px-6 py-3 rounded"
       >
         Add
       </button>

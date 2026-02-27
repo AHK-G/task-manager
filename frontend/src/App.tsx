@@ -12,7 +12,6 @@ import AddTaskForm from "./components/AddTaskForm";
 import { api } from "./api";
 
 function App() {
-  // ================= AUTH =================
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -21,14 +20,12 @@ function App() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ================= TASK FORM =================
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<
     "low" | "medium" | "high"
   >("medium");
   const [dueDate, setDueDate] = useState("");
 
-  // ================= TASK HOOK =================
   const {
     tasks,
     addTask,
@@ -37,7 +34,6 @@ function App() {
     reorderTasks,
   } = useTasks(isLoggedIn);
 
-  // ================= AUTH FUNCTIONS =================
   const register = async () => {
     try {
       await api.post("/auth/register", { email, password });
@@ -67,7 +63,6 @@ function App() {
     setIsLoggedIn(false);
   };
 
-  // ================= URGENT GROUPING =================
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -97,7 +92,6 @@ function App() {
 
   const completedTasks = tasks.filter((t) => t.completed);
 
-  // ================= AUTH VIEW =================
   if (!isLoggedIn) {
     return (
       <AuthForm
@@ -113,10 +107,10 @@ function App() {
     );
   }
 
-  // ================= MAIN =================
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white">
-      <header className="flex justify-between items-center p-6">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10">
+  <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 px-4 sm:px-6 py-4">
         <h1 className="text-2xl font-bold">Your Tasks</h1>
         <button
           onClick={logout}
@@ -124,9 +118,10 @@ function App() {
         >
           Logout
         </button>
+      </div>
       </header>
 
-      <main className="max-w-2xl mx-auto p-6">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
         <AddTaskForm
           title={title}
           setTitle={setTitle}
