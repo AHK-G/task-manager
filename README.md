@@ -1,26 +1,77 @@
 # Task Manager (Full-Stack)
 
-Live Demo:
-https://task-manager-nu-snowy.vercel.app/
+A full-stack task management application built with **React, Node.js, and MongoDB**.
 
-Backend:
-https://task-manager-api-k63u.onrender.com/
+It includes authentication, drag-and-drop reordering, smart due-date prioritization, backend test coverage, CI pipeline, and production deployment.
 
+---
 
--- Demo Account --
+## Live Demo
 
-Email: demo@demo.com
-Password: demo123
+- **Frontend:**  
+  https://task-manager-nu-snowy.vercel.app/
 
---------- Tech Stack ---------
+- **Backend API:**  
+  https://task-manager-api-k63u.onrender.com/
 
-Frontend:
+---
+
+##  Demo Account
+
+Email: `demo@demo.com`  
+Password: `demo123`
+
+---
+
+# Features
+
+## Authentication
+- Register & Login with JWT
+- Protected routes
+- Secure password hashing (bcrypt)
+- Persistent login via localStorage
+
+---
+
+## Task Management
+- Create, edit, delete tasks
+- Mark tasks as completed
+- Drag & drop reordering (persisted in database)
+- Optional priority (Low / Medium / High)
+- Optional due date
+- Inline title editing
+
+---
+
+## Smart Logic
+- Tasks due within 3 days automatically appear under **Urgent**
+- Completed tasks separated
+- Backend validation prevents invalid priority injection
+- Order persistence via `/tasks/reorder` endpoint
+
+---
+
+## UX Enhancements
+- Fully responsive (mobile + desktop)
+- Loading states for all async actions
+- Toast notifications for user feedback
+- Clean glassmorphism UI design
+
+---
+
+# Tech Stack
+
+## Frontend
 - React (Vite)
 - TypeScript
 - TailwindCSS
 - Axios
+- DnD Kit (drag & drop)
+- React Hot Toast
 
-Backend:
+---
+
+## Backend
 - Node.js
 - Express
 - TypeScript
@@ -29,15 +80,72 @@ Backend:
 - JWT Authentication
 - Bcrypt
 
-Testing:
+---
+
+## Testing
 - Jest
 - Supertest
 - MongoDB Memory Server
+- ~88% backend test coverage
 
-CI:
-- GitHub Actions
+---
 
-Deployment:
+## CI
+- GitHub Actions (automated test pipeline)
+
+---
+
+## Deployment
 - Frontend → Vercel
 - Backend → Render
 - Database → MongoDB Atlas
+
+---
+
+# Running Locally
+
+##  Clone Repository
+
+```bash
+git clone https://github.com/AHK-G/task-manager.git
+cd task-manager
+```
+
+---
+
+## Backend Setup
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+---
+
+## Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+# Running Backend Tests
+
+```bash
+npm test
+```
+
+Includes:
+- Auth route tests
+- Task CRUD tests
+- Validation tests
+- Unauthorized access tests
+- Integration tests using MongoDB Memory Server
+
+---
+
+# Screenshots
