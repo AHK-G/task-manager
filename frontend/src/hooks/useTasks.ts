@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { arrayMove } from "@dnd-kit/sortable";
+import { toast } from "react-hot-toast";
 import type { Task } from "../types/task";
 
 export function useTasks(isLoggedIn: boolean) {
@@ -9,13 +10,10 @@ export function useTasks(isLoggedIn: boolean) {
 
   const fetchTasks = async () => {
     try {
-      setLoading(true);
       const res = await api.get("/tasks");
       setTasks(res.data);
     } catch (error) {
-      console.error("Failed to fetch tasks", error);
-    } finally {
-      setLoading(false);
+      toast.error("Failed to fetch tasks");
     }
   };
 
@@ -31,22 +29,22 @@ export function useTasks(isLoggedIn: boolean) {
 
       const res = await api.post("/tasks", {
         title,
-        priority: priority || undefined,
+        priority: priority ?? undefined,
         dueDate: dueDate || undefined,
       });
 
       setTasks((prev) => [...prev, res.data]);
+
+      toast.success("Task created successfully");
     } catch (error) {
-      console.error("Failed to add task", error);
+      toast.error("Failed to create task");
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleTask = async (task: Task): Promise<void> => {
+  const toggleTask = async (task: Task) => {
     try {
-      setLoading(true);
-
       const res = await api.put(`/tasks/${task._id}`, {
         completed: !task.completed,
       });
@@ -54,23 +52,26 @@ export function useTasks(isLoggedIn: boolean) {
       setTasks((prev) =>
         prev.map((t) => (t._id === task._id ? res.data : t))
       );
+
+      toast.success(
+        res.data.completed
+          ? "Task completed"
+          : "Task marked active"
+      );
     } catch (error) {
-      console.error("Failed to toggle task", error);
-    } finally {
-      setLoading(false);
+      toast.error("Failed to update task");
     }
   };
 
-  const deleteTask = async (id: string): Promise<void> => {
+  const deleteTask = async (id: string) => {
     try {
-      setLoading(true);
-
       await api.delete(`/tasks/${id}`);
+
       setTasks((prev) => prev.filter((t) => t._id !== id));
+
+      toast.success("Task deleted");
     } catch (error) {
-      console.error("Failed to delete task", error);
-    } finally {
-      setLoading(false);
+      toast.error("Failed to delete task");
     }
   };
 
@@ -85,8 +86,6 @@ export function useTasks(isLoggedIn: boolean) {
     setTasks(newTasks);
 
     try {
-      setLoading(true);
-
       await api.put("/tasks/reorder", {
         tasks: newTasks.map((task, index) => ({
           id: task._id,
@@ -94,9 +93,7 @@ export function useTasks(isLoggedIn: boolean) {
         })),
       });
     } catch (error) {
-      console.error("Failed to reorder tasks", error);
-    } finally {
-      setLoading(false);
+      toast.error("Failed to reorder tasks");
     }
   };
 

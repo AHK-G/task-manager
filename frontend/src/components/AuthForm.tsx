@@ -21,6 +21,7 @@ export default function AuthForm({
   setIsRegisterMode,
   error,
   onSubmit,
+  loading,
 }: Props) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white">
@@ -51,9 +52,13 @@ export default function AuthForm({
         />
 
         <button
-          className="w-full bg-indigo-500 py-3 rounded mb-4"
           onClick={onSubmit}
+          disabled={loading}
+          className="w-full bg-indigo-500 py-3 rounded mb-4 flex items-center justify-center gap-2 disabled:opacity-60"
         >
+          {loading && (
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          )}
           {isRegisterMode ? "Register" : "Login"}
         </button>
 
