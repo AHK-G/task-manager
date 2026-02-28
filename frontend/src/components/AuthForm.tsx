@@ -9,6 +9,7 @@ interface Props {
   setIsRegisterMode: Dispatch<SetStateAction<boolean>>;
   error: string | null;
   onSubmit: () => void;
+  loading: boolean;
 }
 
 export default function AuthForm({

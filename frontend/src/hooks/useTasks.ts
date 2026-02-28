@@ -5,41 +5,73 @@ import type { Task } from "../types/task";
 
 export function useTasks(isLoggedIn: boolean) {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const fetchTasks = async () => {
-    const res = await api.get("/tasks");
-    setTasks(res.data);
+    try {
+      setLoading(true);
+      const res = await api.get("/tasks");
+      setTasks(res.data);
+    } catch (error) {
+      console.error("Failed to fetch tasks", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addTask = async (
     title: string,
-    priority: "low" | "medium" | "high",
+    priority: "low" | "medium" | "high" | null,
     dueDate: string
   ) => {
     if (!title.trim()) return;
 
-    const res = await api.post("/tasks", {
-      title,
-      priority,
-      dueDate: dueDate || undefined,
-    });
+    try {
+      setLoading(true);
 
-    setTasks((prev) => [...prev, res.data]);
+      const res = await api.post("/tasks", {
+        title,
+        priority: priority || undefined,
+        dueDate: dueDate || undefined,
+      });
+
+      setTasks((prev) => [...prev, res.data]);
+    } catch (error) {
+      console.error("Failed to add task", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleTask = async (task: Task) => {
-    const res = await api.put(`/tasks/${task._id}`, {
-      completed: !task.completed,
-    });
+  const toggleTask = async (task: Task): Promise<void> => {
+    try {
+      setLoading(true);
 
-    setTasks((prev) =>
-      prev.map((t) => (t._id === task._id ? res.data : t))
-    );
+      const res = await api.put(`/tasks/${task._id}`, {
+        completed: !task.completed,
+      });
+
+      setTasks((prev) =>
+        prev.map((t) => (t._id === task._id ? res.data : t))
+      );
+    } catch (error) {
+      console.error("Failed to toggle task", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteTask = async (id: string) => {
-    await api.delete(`/tasks/${id}`);
-    setTasks((prev) => prev.filter((t) => t._id !== id));
+  const deleteTask = async (id: string): Promise<void> => {
+    try {
+      setLoading(true);
+
+      await api.delete(`/tasks/${id}`);
+      setTasks((prev) => prev.filter((t) => t._id !== id));
+    } catch (error) {
+      console.error("Failed to delete task", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const reorderTasks = async (event: any) => {
@@ -52,21 +84,33 @@ export function useTasks(isLoggedIn: boolean) {
     const newTasks = arrayMove(tasks, oldIndex, newIndex);
     setTasks(newTasks);
 
-    await api.put("/tasks/reorder", {
-      tasks: newTasks.map((task, index) => ({
-        id: task._id,
-        order: index,
-      })),
-    });
+    try {
+      setLoading(true);
+
+      await api.put("/tasks/reorder", {
+        tasks: newTasks.map((task, index) => ({
+          id: task._id,
+          order: index,
+        })),
+      });
+    } catch (error) {
+      console.error("Failed to reorder tasks", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    if (isLoggedIn) fetchTasks();
+    if (isLoggedIn) {
+      fetchTasks();
+    } else {
+      setTasks([]);
+    }
   }, [isLoggedIn]);
 
   return {
     tasks,
-    setTasks,
+    loading,
     addTask,
     toggleTask,
     deleteTask,

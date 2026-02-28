@@ -6,8 +6,8 @@ import type { Task } from "../types/task";
 
 interface Props {
   task: Task;
-  toggleTask: (task: Task) => void;
-  deleteTask: (id: string) => void;
+  toggleTask: (task: Task) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   disableDrag?: boolean;
 }
 
@@ -32,7 +32,9 @@ export default function TaskItem({
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
-  const [saving, setSaving] = useState(false);
+  const [savingTitle, setSavingTitle] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -48,13 +50,31 @@ export default function TaskItem({
     }
 
     try {
-      setSaving(true);
+      setSavingTitle(true);
       await api.put(`/tasks/${task._id}`, {
         title: editValue,
       });
     } finally {
-      setSaving(false);
+      setSavingTitle(false);
       setIsEditingTitle(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+      await deleteTask(task._id);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleToggle = async () => {
+    try {
+      setToggling(true);
+      await toggleTask(task);
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -85,8 +105,9 @@ export default function TaskItem({
         <input
           type="checkbox"
           checked={task.completed}
-          onChange={() => toggleTask(task)}
-          className="w-5 h-5 accent-indigo-500 shrink-0"
+          onChange={handleToggle}
+          disabled={toggling}
+          className="w-5 h-5 accent-indigo-500 shrink-0 disabled:opacity-50"
         />
 
         {isEditingTitle ? (
@@ -121,13 +142,15 @@ export default function TaskItem({
       <div className="flex flex-wrap items-center gap-3 sm:gap-4 sm:ml-6">
 
         <div className="flex items-center gap-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300">
-          {saving && (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+
+          {savingTitle && (
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           )}
 
           <button
             onClick={() => setIsEditingTitle(true)}
-            className="text-indigo-400 hover:text-indigo-300 transition"
+            disabled={savingTitle}
+            className="text-indigo-400 hover:text-indigo-300 transition disabled:opacity-50"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -146,9 +169,13 @@ export default function TaskItem({
           </button>
 
           <button
-            onClick={() => deleteTask(task._id)}
-            className="text-red-400 hover:text-red-500 transition text-sm"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex items-center gap-1 text-red-400 hover:text-red-500 transition disabled:opacity-50"
           >
+            {deleting && (
+              <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></span>
+            )}
             Delete
           </button>
         </div>
@@ -159,17 +186,19 @@ export default function TaskItem({
           </span>
         )}
 
-        <span
-          className={`text-xs px-2 py-1 rounded-full font-medium ${
-            task.priority === "high"
-              ? "bg-red-500/30 text-red-400"
-              : task.priority === "medium"
-              ? "bg-yellow-500/30 text-yellow-300"
-              : "bg-blue-500/30 text-blue-300"
-          }`}
-        >
-          {task.priority}
-        </span>
+        {task.priority && (
+          <span
+            className={`text-xs px-2 py-1 rounded-full font-medium ${
+              task.priority === "high"
+                ? "bg-red-500/30 text-red-400"
+                : task.priority === "medium"
+                ? "bg-yellow-500/30 text-yellow-300"
+                : "bg-blue-500/30 text-blue-300"
+            }`}
+          >
+            {task.priority}
+          </span>
+        )}
       </div>
     </div>
   );
