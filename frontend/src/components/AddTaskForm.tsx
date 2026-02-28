@@ -5,9 +5,7 @@ interface Props {
   setTitle: Dispatch<SetStateAction<string>>;
 
   priority: "low" | "medium" | "high" | null;
-  setPriority: Dispatch<
-    SetStateAction<"low" | "medium" | "high" | null>
-  >;
+  setPriority: Dispatch<SetStateAction<"low" | "medium" | "high" | null>>;
 
   dueDate: string;
   setDueDate: Dispatch<SetStateAction<string>>;
@@ -42,7 +40,7 @@ export default function AddTaskForm({
           setPriority(
             e.target.value === ""
               ? null
-              : (e.target.value as "low" | "medium" | "high")
+              : (e.target.value as "low" | "medium" | "high"),
           )
         }
         disabled={loading}
@@ -63,21 +61,21 @@ export default function AddTaskForm({
       />
 
       <button
-  onClick={onAdd}
-  disabled={loading || !title.trim()}
-  className={`relative w-full sm:w-auto px-6 py-3 rounded transition flex items-center justify-center gap-2
+        onClick={onAdd}
+        disabled={loading || !title.trim()}
+        className={`relative w-full sm:w-auto px-6 py-3 rounded transition flex items-center justify-center gap-2
     ${
       loading
         ? "bg-gray-500 cursor-not-allowed"
         : "bg-green-600 hover:bg-green-700"
     }
   `}
->
-  {loading && (
-    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-  )}
-  <span>{loading ? "Adding..." : "Add"}</span>
-</button>
+      >
+        {loading && (
+          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+        )}
+        <span>{loading ? "Adding..." : "Add"}</span>
+      </button>
     </div>
   );
 }

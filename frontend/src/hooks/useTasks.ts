@@ -20,7 +20,7 @@ export function useTasks(isLoggedIn: boolean) {
   const addTask = async (
     title: string,
     priority: "low" | "medium" | "high" | null,
-    dueDate: string
+    dueDate: string,
   ) => {
     if (!title.trim()) return;
 
@@ -49,14 +49,10 @@ export function useTasks(isLoggedIn: boolean) {
         completed: !task.completed,
       });
 
-      setTasks((prev) =>
-        prev.map((t) => (t._id === task._id ? res.data : t))
-      );
+      setTasks((prev) => prev.map((t) => (t._id === task._id ? res.data : t)));
 
       toast.success(
-        res.data.completed
-          ? "Task completed"
-          : "Task marked active"
+        res.data.completed ? "Task completed" : "Task marked active",
       );
     } catch (error) {
       toast.error("Failed to update task");
@@ -72,6 +68,18 @@ export function useTasks(isLoggedIn: boolean) {
       toast.success("Task deleted");
     } catch (error) {
       toast.error("Failed to delete task");
+    }
+  };
+
+  const updateTaskTitle = async (id: string, title: string) => {
+    try {
+      const res = await api.put(`/tasks/${id}`, { title });
+
+      setTasks((prev) => prev.map((t) => (t._id === id ? res.data : t)));
+
+      toast.success("Task updated");
+    } catch {
+      toast.error("Failed to update task");
     }
   };
 
@@ -112,5 +120,6 @@ export function useTasks(isLoggedIn: boolean) {
     toggleTask,
     deleteTask,
     reorderTasks,
+    updateTaskTitle,
   };
 }

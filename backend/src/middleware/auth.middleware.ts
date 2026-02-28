@@ -5,7 +5,7 @@ import { AppError } from "../utils/AppError";
 export const authMiddleware = (
   req: Request & { userId?: string },
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const header = req.headers.authorization;
 
@@ -16,10 +16,9 @@ export const authMiddleware = (
   const token = header.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+      userId: string;
+    };
 
     req.userId = decoded.userId;
     next();

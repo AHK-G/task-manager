@@ -31,9 +31,7 @@ export default function AuthForm({
         </h2>
 
         {error && (
-          <div className="bg-red-500/20 p-3 rounded mb-4 text-sm">
-            {error}
-          </div>
+          <div className="bg-red-500/20 p-3 rounded mb-4 text-sm">{error}</div>
         )}
 
         <input

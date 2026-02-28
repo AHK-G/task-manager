@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { api } from "../api";
 import type { Task } from "../types/task";
 
 interface Props {
   task: Task;
   toggleTask: (task: Task) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
+  updateTaskTitle: (id: string, title: string) => Promise<void>;
   disableDrag?: boolean;
 }
 
@@ -15,15 +15,11 @@ export default function TaskItem({
   task,
   toggleTask,
   deleteTask,
+  updateTaskTitle,
   disableDrag = false,
 }: Props) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: task._id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: task._id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -51,9 +47,7 @@ export default function TaskItem({
 
     try {
       setSavingTitle(true);
-      await api.put(`/tasks/${task._id}`, {
-        title: editValue,
-      });
+      await updateTaskTitle(task._id, editValue);
     } finally {
       setSavingTitle(false);
       setIsEditingTitle(false);
@@ -129,9 +123,7 @@ export default function TaskItem({
           <span
             onDoubleClick={() => setIsEditingTitle(true)}
             className={`text-base sm:text-lg truncate ${
-              task.completed
-                ? "line-through text-slate-400"
-                : "text-white"
+              task.completed ? "line-through text-slate-400" : "text-white"
             }`}
           >
             {task.title}
@@ -140,9 +132,7 @@ export default function TaskItem({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 sm:gap-4 sm:ml-6">
-
         <div className="flex items-center gap-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300">
-
           {savingTitle && (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           )}
@@ -154,7 +144,7 @@ export default function TaskItem({
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="w-5 h-5"
+              className="w-8 h-8"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -192,8 +182,8 @@ export default function TaskItem({
               task.priority === "high"
                 ? "bg-red-500/30 text-red-400"
                 : task.priority === "medium"
-                ? "bg-yellow-500/30 text-yellow-300"
-                : "bg-blue-500/30 text-blue-300"
+                  ? "bg-yellow-500/30 text-yellow-300"
+                  : "bg-blue-500/30 text-blue-300"
             }`}
           >
             {task.priority}

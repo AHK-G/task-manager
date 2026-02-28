@@ -15,16 +15,15 @@ import { api } from "./api";
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("token")
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
 
   const [title, setTitle] = useState("");
-  const [priority, setPriority] =
-    useState<"low" | "medium" | "high" | null>(null);
+  const [priority, setPriority] = useState<"low" | "medium" | "high" | null>(
+    null,
+  );
   const [dueDate, setDueDate] = useState("");
 
   const {
@@ -33,15 +32,14 @@ function App() {
     toggleTask,
     deleteTask,
     reorderTasks,
+    updateTaskTitle,
     loading,
   } = useTasks(isLoggedIn);
 
   const register = async () => {
     try {
       setAuthLoading(true);
-
       await api.post("/auth/register", { email, password });
-
       toast.success("Account created successfully");
       setIsRegisterMode(false);
       setError(null);
@@ -63,7 +61,6 @@ function App() {
       });
 
       localStorage.setItem("token", res.data.token);
-
       toast.success("Welcome back");
       setIsLoggedIn(true);
       setError(null);
@@ -86,28 +83,35 @@ function App() {
 
   const isWithinThreeDays = (dateString?: string) => {
     if (!dateString) return false;
+
     const due = new Date(dateString);
     due.setHours(0, 0, 0, 0);
 
     const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.floor(
-      diffTime / (1000 * 60 * 60 * 24)
-    );
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays >= 0 && diffDays <= 3;
   };
 
+  const overdueTasks = tasks.filter((task) => {
+    if (!task.dueDate || task.completed) return false;
+
+    const due = new Date(task.dueDate);
+    due.setHours(0, 0, 0, 0);
+
+    return due < today;
+  });
+
   const urgentTasks = tasks.filter(
     (task) =>
-      !task.completed &&
-      task.dueDate &&
-      isWithinThreeDays(task.dueDate)
+      !task.completed && task.dueDate && isWithinThreeDays(task.dueDate),
   );
 
   const normalTasks = tasks.filter(
     (task) =>
       !task.completed &&
-      !urgentTasks.some((t) => t._id === task._id)
+      !urgentTasks.some((t) => t._id === task._id) &&
+      !overdueTasks.some((t) => t._id === task._id),
   );
 
   const completedTasks = tasks.filter((t) => t.completed);
@@ -154,6 +158,26 @@ function App() {
               loading={loading}
             />
 
+            {overdueTasks.length > 0 && (
+              <>
+                <h3 className="text-red-500 text-sm uppercase tracking-wider mb-3">
+                  Overdue
+                </h3>
+                <div className="space-y-3 mb-8">
+                  {overdueTasks.map((task) => (
+                    <TaskItem
+                      key={task._id}
+                      task={task}
+                      toggleTask={toggleTask}
+                      deleteTask={deleteTask}
+                      updateTaskTitle={updateTaskTitle}
+                      disableDrag
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
             {urgentTasks.length > 0 && (
               <>
                 <h3 className="text-red-400 text-sm uppercase tracking-wider mb-3">
@@ -166,6 +190,7 @@ function App() {
                       task={task}
                       toggleTask={toggleTask}
                       deleteTask={deleteTask}
+                      updateTaskTitle={updateTaskTitle}
                       disableDrag
                     />
                   ))}
@@ -174,26 +199,33 @@ function App() {
             )}
 
             {normalTasks.length > 0 && (
-              <DndContext
-                collisionDetection={closestCenter}
-                onDragEnd={reorderTasks}
-              >
-                <SortableContext
-                  items={normalTasks.map((t) => t._id)}
-                  strategy={verticalListSortingStrategy}
+              <>
+                <h3 className="text-indigo-400 text-sm uppercase tracking-wider mb-3">
+                  Active
+                </h3>
+
+                <DndContext
+                  collisionDetection={closestCenter}
+                  onDragEnd={reorderTasks}
                 >
-                  <div className="space-y-3">
-                    {normalTasks.map((task) => (
-                      <TaskItem
-                        key={task._id}
-                        task={task}
-                        toggleTask={toggleTask}
-                        deleteTask={deleteTask}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+                  <SortableContext
+                    items={normalTasks.map((t) => t._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-3 mb-8">
+                      {normalTasks.map((task) => (
+                        <TaskItem
+                          key={task._id}
+                          task={task}
+                          toggleTask={toggleTask}
+                          deleteTask={deleteTask}
+                          updateTaskTitle={updateTaskTitle}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </>
             )}
 
             {completedTasks.length > 0 && (
@@ -208,6 +240,7 @@ function App() {
                       task={task}
                       toggleTask={toggleTask}
                       deleteTask={deleteTask}
+                      updateTaskTitle={updateTaskTitle}
                       disableDrag
                     />
                   ))}

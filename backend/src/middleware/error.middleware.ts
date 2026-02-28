@@ -4,7 +4,7 @@ export const errorHandler = (
   err: any,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   const statusCode = err.statusCode || 500;
 

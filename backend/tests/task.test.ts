@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 
 let mongoServer: MongoMemoryServer;
 let token: string;
-dotenv.config()
+dotenv.config();
 
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
@@ -119,34 +119,34 @@ describe("Task API (Authenticated)", () => {
   });
 
   it("should fail with invalid token", async () => {
-  const res = await request(app)
-    .get("/tasks")
-    .set("Authorization", "Bearer invalidtoken");
+    const res = await request(app)
+      .get("/tasks")
+      .set("Authorization", "Bearer invalidtoken");
 
-  expect(res.status).toBe(401);
-});
-  
-it("should fail reorder with invalid payload", async () => {
-  const res = await request(app)
-    .put("/tasks/reorder")
-    .set("Authorization", `Bearer ${token}`)
-    .send({ tasks: "not-an-array" });
+    expect(res.status).toBe(401);
+  });
 
-  expect(res.status).toBe(400);
-});
+  it("should fail reorder with invalid payload", async () => {
+    const res = await request(app)
+      .put("/tasks/reorder")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ tasks: "not-an-array" });
 
-it("should ignore invalid priority updates", async () => {
-  const create = await request(app)
-    .post("/tasks")
-    .set("Authorization", `Bearer ${token}`)
-    .send({ title: "Priority Test" });
+    expect(res.status).toBe(400);
+  });
 
-  const res = await request(app)
-    .put(`/tasks/${create.body._id}`)
-    .set("Authorization", `Bearer ${token}`)
-    .send({ priority: "invalid-priority" });
+  it("should ignore invalid priority updates", async () => {
+    const create = await request(app)
+      .post("/tasks")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Priority Test" });
 
-  expect(res.status).toBe(200);
-  expect(res.body.priority).not.toBe("invalid-priority");
-});
+    const res = await request(app)
+      .put(`/tasks/${create.body._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ priority: "invalid-priority" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.priority).not.toBe("invalid-priority");
+  });
 });
