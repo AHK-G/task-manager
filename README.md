@@ -153,7 +153,7 @@ Includes:
 ### Dashboard (Drag & Drop + Sections)
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/9597d017-317c-45a9-8203-d726c18a688a" width="950" />
+  <img src="./screenshots/Dashboard_Drag_and_Drop.png" width="950" />
 </p>
 
 ---
@@ -161,7 +161,7 @@ Includes:
 ### Authentication
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/52c3695f-0d93-4705-a1ab-23b38ca65b37" width="950" />
+  <img src="./screenshots/Authentication.png" width="950" />
 </p>
 
 ---
@@ -169,6 +169,6 @@ Includes:
 ### Mobile View
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/92c0d120-d6f8-42b3-a9bd-a24fc7e9d730" width="400" />
+  <img src="./screenshots/Mobile.png" width="400" />
 </p>
 
